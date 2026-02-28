@@ -30,8 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <head>
-        <link rel="icon" href="/icons/icon-192.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        <link rel="manifest" href="./manifest.json" />
+        <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="./icons/icon-192.svg" />
       </head>
       <body className="font-sans antialiased">
         {children}

@@ -47,7 +47,8 @@ export default function HomePage() {
     setMounted(true);
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      const base = document.querySelector("link[rel='manifest']")?.getAttribute("href")?.replace("manifest.json", "") ?? "/";
+      navigator.serviceWorker.register(`${base}sw.js`).catch(() => {});
     }
   }, []);
 
