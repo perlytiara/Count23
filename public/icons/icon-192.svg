@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="38.400000000000006" fill="#0a0f1e"/>
+  <circle cx="96" cy="96" r="72.96000000000001" fill="none" stroke="#3b82f6" stroke-width="7.68" opacity="0.3"/>
+  <circle cx="96" cy="96" r="72.96000000000001" fill="none" stroke="#3b82f6" stroke-width="7.68"
+    stroke-dasharray="458.42120001182263" stroke-dashoffset="137.52636000354678"
+    stroke-linecap="round" transform="rotate(-90 96 96)"/>
+  <text x="96" y="103.68" text-anchor="middle" fill="white" font-family="system-ui,sans-serif"
+    font-size="30.72" font-weight="700">23</text>
+</svg>

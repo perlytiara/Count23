@@ -1,0 +1,41 @@
+{
+  "app": {
+    "title": "Count23",
+    "tagline": "Le compte à rebours vers votre moment"
+  },
+  "timer": {
+    "setTarget": "Définir l'heure cible",
+    "start": "Lancer le compte à rebours",
+    "cancel": "Annuler",
+    "reset": "Nouveau minuteur",
+    "hours": "heures",
+    "minutes": "minutes",
+    "seconds": "secondes",
+    "targetLabel": "Compte à rebours jusqu'à",
+    "completed": "C'est l'heure !",
+    "noActive": "Définissez une heure pour démarrer le compte à rebours"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "active": "Active",
+    "completed": "Terminée",
+    "cancelled": "Annulée",
+    "empty": "Aucune session",
+    "clear": "Effacer l'historique"
+  },
+  "notifications": {
+    "enable": "Activer les notifications",
+    "enabled": "Notifications activées",
+    "completed": "Votre compte à rebours est terminé !",
+    "fiveMin": "Il reste 5 minutes",
+    "oneMin": "Il reste 1 minute"
+  },
+  "install": {
+    "prompt": "Installer l'appli",
+    "description": "Ajoutez Count23 à votre écran d'accueil pour la meilleure expérience"
+  },
+  "locale": {
+    "en": "English",
+    "fr": "Français"
+  }
+}
