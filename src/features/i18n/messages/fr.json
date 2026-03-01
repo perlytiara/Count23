@@ -13,7 +13,9 @@
     "seconds": "secondes",
     "targetLabel": "Compte à rebours jusqu'à",
     "completed": "C'est l'heure !",
-    "noActive": "Définissez une heure pour démarrer le compte à rebours"
+    "noActive": "Définissez une heure pour démarrer le compte à rebours",
+    "popOut": "Fenêtre flottante",
+    "popOutActive": "Flottant"
   },
   "sessions": {
     "title": "Sessions",

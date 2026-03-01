@@ -13,7 +13,9 @@
     "seconds": "seconds",
     "targetLabel": "Counting down to",
     "completed": "Time's up!",
-    "noActive": "Set a time to start counting down"
+    "noActive": "Set a time to start counting down",
+    "popOut": "Pop out",
+    "popOutActive": "Floating"
   },
   "sessions": {
     "title": "Sessions",
@@ -32,7 +34,7 @@
   },
   "install": {
     "prompt": "Install App",
-    "description": "Add Count23 to your home screen for the best experience"
+    "description": "Add to home screen. Samsung Internet: Menu → Add page to → Home screen"
   },
   "locale": {
     "en": "English",

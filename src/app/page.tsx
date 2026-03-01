@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CountdownCircle,
@@ -9,8 +9,10 @@ import {
   SessionList,
   SuccessAnimation,
   useCountdown,
+  usePictureInPicture,
   useSession,
 } from "@/features/countdown";
+import { formatRemaining } from "@/features/countdown/utils/time";
 import { NotificationToggle, useNotifications } from "@/features/notifications";
 import { LocaleContext, getMessages, type Locale } from "@/features/i18n";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
@@ -34,6 +36,7 @@ export default function HomePage() {
   const t = useMemo(() => getMessages(locale), [locale]);
   const { sessions, hydrated, createSession, completeSession, cancelSession, clearHistory, getActiveSession } = useSession();
   const { permission, supported, requestPermission, sendNotification } = useNotifications();
+  const pip = usePictureInPicture(targetDate);
 
   const activeSession = getActiveSession();
 
@@ -65,6 +68,46 @@ export default function HomePage() {
       }
     }
   }, [hydrated, getActiveSession, completeSession]);
+
+  const liveNotificationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (
+      !(targetDate && !showComplete) ||
+      permission !== "granted" ||
+      !("serviceWorker" in navigator) ||
+      !navigator.serviceWorker.controller
+    ) {
+      if (liveNotificationInterval.current) {
+        clearInterval(liveNotificationInterval.current);
+        liveNotificationInterval.current = null;
+      }
+      if (!(targetDate && !showComplete) && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "COUNTDOWN_CANCEL" });
+      }
+      return;
+    }
+
+    const updateLiveNotification = () => {
+      const remaining = targetDate.getTime() - Date.now();
+      if (remaining <= 0) return;
+      navigator.serviceWorker.controller?.postMessage({
+        type: "COUNTDOWN_LIVE",
+        title: "Count23",
+        body: `${formatRemaining(remaining)} left`,
+      });
+    };
+
+    updateLiveNotification();
+    liveNotificationInterval.current = setInterval(updateLiveNotification, 1000);
+
+    return () => {
+      if (liveNotificationInterval.current) {
+        clearInterval(liveNotificationInterval.current);
+        liveNotificationInterval.current = null;
+      }
+    };
+  }, [targetDate, showComplete, permission]);
 
   const handleComplete = useCallback(() => {
     setShowComplete(true);
@@ -128,8 +171,8 @@ export default function HomePage() {
 
   return (
     <LocaleContext value={{ locale, setLocale, t }}>
-      <div className="flex min-h-dvh flex-col">
-        <header className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
+      <div className="flex min-h-dvh flex-col min-h-[100dvh] overflow-x-hidden touch-pan-y">
+        <header className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))] shrink-0">
           <h1 className="text-lg font-bold text-gradient sm:text-xl">Count23</h1>
           <div className="flex items-center gap-2">
             <NotificationToggle
@@ -166,7 +209,13 @@ export default function HomePage() {
                     }}
                   />
                 </div>
-                <CountdownDisplay targetTime={targetDate} onCancel={handleCancel} />
+                <CountdownDisplay
+                  targetTime={targetDate}
+                  onCancel={handleCancel}
+                  onPopOut={pip.enterPiP}
+                  pipSupported={pip.isSupported}
+                  pipActive={pip.isActive}
+                />
               </motion.div>
             ) : (
               <motion.div
@@ -204,7 +253,7 @@ export default function HomePage() {
           )}
         </main>
 
-        <footer className="pb-4 text-center text-[10px] text-slate-600">
+        <footer className="pb-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-[10px] text-slate-600 shrink-0">
           Count23 &middot; {new Date().getFullYear()}
         </footer>
       </div>

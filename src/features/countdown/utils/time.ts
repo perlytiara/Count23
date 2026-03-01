@@ -35,3 +35,16 @@ export function formatTimeLocale(date: Date, locale: string): string {
     hour12: locale === "en",
   }).format(date);
 }
+
+/** Format remaining ms as "2h 15m 33s" or "15m 33s" for notifications. */
+export function formatRemaining(ms: number): string {
+  if (ms <= 0) return "0s";
+  const hours = Math.floor(ms / 3_600_000);
+  const minutes = Math.floor((ms % 3_600_000) / 60_000);
+  const seconds = Math.floor((ms % 60_000) / 1_000);
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+  return parts.join(" ");
+}

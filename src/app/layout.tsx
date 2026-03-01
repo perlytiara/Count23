@@ -10,11 +10,16 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Count23 - Countdown Timer",
-  description: "Beautiful countdown timer PWA with notifications. Set a target time and watch it count down live.",
+  description:
+    "Live countdown timer with notification bar and floating popup. Install on Samsung Internet or home screen for a fluid app experience.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Count23",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "format-detection": "telephone=no",
   },
 };
 
@@ -24,6 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -33,6 +39,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="./manifest.json" />
         <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="./icons/icon-192.svg" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="application-name" content="Count23" />
+        <meta name="msapplication-TileColor" content="#0a0f1e" />
       </head>
       <body className="font-sans antialiased">
         {children}
