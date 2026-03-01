@@ -21,8 +21,6 @@ const INITIAL_STATE: CountdownState = {
   isComplete: false,
 };
 
-const ONE_SECOND = 1000;
-
 export function useCountdown({
   targetTime,
   totalDuration,
@@ -30,7 +28,7 @@ export function useCountdown({
   onMilestone,
 }: UseCountdownOptions): CountdownState {
   const [state, setState] = useState<CountdownState>(INITIAL_STATE);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rafRef = useRef<number>(0);
   const firedMilestones = useRef<Set<string>>(new Set());
 
   const tick = useCallback(() => {
@@ -53,11 +51,11 @@ export function useCountdown({
     const fiveMin = 5 * 60 * 1000;
     const oneMin = 60 * 1000;
 
-    if (remaining <= fiveMin && remaining > fiveMin - 1000 && !firedMilestones.current.has("5min")) {
+    if (remaining <= fiveMin && remaining > fiveMin - 150 && !firedMilestones.current.has("5min")) {
       firedMilestones.current.add("5min");
       onMilestone?.("5min");
     }
-    if (remaining <= oneMin && remaining > oneMin - 1000 && !firedMilestones.current.has("1min")) {
+    if (remaining <= oneMin && remaining > oneMin - 150 && !firedMilestones.current.has("1min")) {
       firedMilestones.current.add("1min");
       onMilestone?.("1min");
     }
@@ -71,6 +69,8 @@ export function useCountdown({
       progress,
       isComplete: false,
     });
+
+    rafRef.current = requestAnimationFrame(tick);
   }, [targetTime, totalDuration, onComplete, onMilestone]);
 
   useEffect(() => {
@@ -80,15 +80,10 @@ export function useCountdown({
     }
 
     firedMilestones.current.clear();
-    tick();
-
-    intervalRef.current = setInterval(tick, ONE_SECOND);
+    rafRef.current = requestAnimationFrame(tick);
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [targetTime, tick]);
 
