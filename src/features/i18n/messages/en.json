@@ -15,7 +15,8 @@
     "completed": "Time's up!",
     "noActive": "Set a time to start counting down",
     "popOut": "Pop out",
-    "popOutActive": "Floating"
+    "popOutActive": "Floating",
+    "addAnother": "Add another timer"
   },
   "sessions": {
     "title": "Sessions",
@@ -23,7 +24,9 @@
     "completed": "Completed",
     "cancelled": "Cancelled",
     "empty": "No sessions yet",
-    "clear": "Clear history"
+    "clear": "Clear history",
+    "remove": "Remove",
+    "addTimer": "Add timer"
   },
   "notifications": {
     "enable": "Enable notifications",

@@ -72,6 +72,17 @@ export function useSession() {
     return sessions.find((s) => s.status === "active") ?? null;
   }, [sessions]);
 
+  const getActiveSessions = useCallback((): CountdownSession[] => {
+    return sessions.filter((s) => s.status === "active");
+  }, [sessions]);
+
+  const removeSession = useCallback(
+    (id: string) => {
+      persist(sessions.filter((s) => s.id !== id));
+    },
+    [sessions, persist],
+  );
+
   return {
     sessions,
     hydrated,
@@ -80,5 +91,7 @@ export function useSession() {
     cancelSession,
     clearHistory,
     getActiveSession,
+    getActiveSessions,
+    removeSession,
   };
 }

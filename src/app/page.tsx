@@ -31,14 +31,32 @@ export default function HomePage() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [totalDuration, setTotalDuration] = useState(0);
   const [showComplete, setShowComplete] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   const t = useMemo(() => getMessages(locale), [locale]);
-  const { sessions, hydrated, createSession, completeSession, cancelSession, clearHistory, getActiveSession } = useSession();
+  const {
+    sessions,
+    hydrated,
+    createSession,
+    completeSession,
+    cancelSession,
+    clearHistory,
+    getActiveSession,
+    getActiveSessions,
+    removeSession,
+  } = useSession();
   const { permission, supported, requestPermission, sendNotification } = useNotifications();
   const pip = usePictureInPicture(targetDate);
 
+  const activeSessions = getActiveSessions();
   const activeSession = getActiveSession();
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+
+  const selectedSession =
+    selectedSessionId && activeSessions.some((s) => s.id === selectedSessionId)
+      ? activeSessions.find((s) => s.id === selectedSessionId) ?? activeSessions[0]
+      : activeSessions[0] ?? null;
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
@@ -57,45 +75,74 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!hydrated) return;
-    const active = getActiveSession();
-    if (active) {
-      const target = new Date(active.targetTime);
-      if (target.getTime() > Date.now()) {
-        setTargetDate(target);
-        setTotalDuration(active.totalDuration);
-      } else {
-        completeSession(active.id);
-      }
+    const actives = getActiveSessions();
+    const stillActive = actives.filter((s) => new Date(s.targetTime).getTime() > Date.now());
+    actives.forEach((s) => {
+      if (new Date(s.targetTime).getTime() <= Date.now()) completeSession(s.id);
+    });
+    if (stillActive.length > 0 && !selectedSessionId) {
+      setSelectedSessionId(stillActive[0].id);
     }
-  }, [hydrated, getActiveSession, completeSession]);
+  }, [hydrated]);
+
+  useEffect(() => {
+    if (!selectedSession) {
+      setTargetDate(null);
+      setTotalDuration(0);
+      return;
+    }
+    const target = new Date(selectedSession.targetTime);
+    if (target.getTime() <= Date.now()) {
+      completeSession(selectedSession.id);
+      const next = getActiveSessions().filter((s) => s.id !== selectedSession.id)[0];
+      setSelectedSessionId(next?.id ?? null);
+      return;
+    }
+    setTargetDate(target);
+    setTotalDuration(selectedSession.totalDuration);
+  }, [selectedSession?.id]);
 
   const liveNotificationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (
-      !(targetDate && !showComplete) ||
-      permission !== "granted" ||
-      !("serviceWorker" in navigator) ||
-      !navigator.serviceWorker.controller
-    ) {
+    if (!(targetDate && !showComplete) || permission !== "granted" || !("serviceWorker" in navigator)) {
       if (liveNotificationInterval.current) {
         clearInterval(liveNotificationInterval.current);
         liveNotificationInterval.current = null;
       }
-      if (!(targetDate && !showComplete) && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: "COUNTDOWN_CANCEL" });
+      if (!(targetDate && !showComplete)) {
+        navigator.serviceWorker.ready.then((reg) => {
+          reg.getNotifications().then((list) => list.filter((n) => n.tag === "count23-live").forEach((n) => n.close()));
+        });
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: "COUNTDOWN_CANCEL" });
+        }
       }
       return;
     }
 
+    const LIVE_TAG = "count23-live";
     const updateLiveNotification = () => {
       const remaining = targetDate.getTime() - Date.now();
       if (remaining <= 0) return;
-      navigator.serviceWorker.controller?.postMessage({
-        type: "COUNTDOWN_LIVE",
-        title: "Count23",
-        body: `${formatRemaining(remaining)} left`,
-      });
+      const body = `${formatRemaining(remaining)} left`;
+      navigator.serviceWorker.ready
+        .then((reg) =>
+          reg.getNotifications().then((existing) => {
+            const found = existing.find((n) => n.tag === LIVE_TAG);
+            if (found) found.close();
+            return reg.showNotification("Count23", {
+              body,
+              tag: LIVE_TAG,
+              icon: "/icons/icon-192.svg",
+              badge: "/icons/icon-192.svg",
+              renotify: false,
+              requireInteraction: true,
+              silent: true,
+            } as NotificationOptions);
+          })
+        )
+        .catch(() => {});
     };
 
     updateLiveNotification();
@@ -111,7 +158,11 @@ export default function HomePage() {
 
   const handleComplete = useCallback(() => {
     setShowComplete(true);
-    if (activeSession) completeSession(activeSession.id);
+    if (selectedSession) {
+      completeSession(selectedSession.id);
+      const next = getActiveSessions().filter((s) => s.id !== selectedSession.id)[0];
+      setSelectedSessionId(next?.id ?? null);
+    }
     sendNotification("Count23", t.notifications.completed);
 
     if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
@@ -121,7 +172,7 @@ export default function HomePage() {
         body: t.notifications.completed,
       });
     }
-  }, [activeSession, completeSession, sendNotification, t]);
+  }, [selectedSession, completeSession, getActiveSessions, sendNotification, t]);
 
   const handleMilestone = useCallback(
     (label: string) => {
@@ -142,22 +193,36 @@ export default function HomePage() {
     (timeString: string) => {
       const target = getTargetDate(timeString);
       const duration = target.getTime() - Date.now();
+      setShowComplete(false);
+      setShowAddForm(false);
+      const session = createSession(target, duration);
+      setSelectedSessionId(session.id);
       setTargetDate(target);
       setTotalDuration(duration);
-      setShowComplete(false);
-      createSession(target, duration);
 
       if (permission === "default") requestPermission();
     },
     [createSession, permission, requestPermission],
   );
 
-  const handleCancel = useCallback(() => {
-    if (activeSession) cancelSession(activeSession.id);
-    setTargetDate(null);
-    setTotalDuration(0);
-    setShowComplete(false);
-  }, [activeSession, cancelSession]);
+  const handleCancel = useCallback(
+    (sessionId?: string) => {
+      const id = sessionId ?? selectedSession?.id;
+      if (id) {
+        cancelSession(id);
+        if (id === selectedSessionId) {
+          const next = getActiveSessions().filter((s) => s.id !== id)[0];
+          setSelectedSessionId(next?.id ?? null);
+        }
+      }
+      if (!sessionId || sessionId === selectedSessionId) {
+        setTargetDate(null);
+        setTotalDuration(0);
+        setShowComplete(false);
+      }
+    },
+    [selectedSession?.id, selectedSessionId, cancelSession, getActiveSessions],
+  );
 
   const handleReset = useCallback(() => {
     setTargetDate(null);
@@ -211,7 +276,7 @@ export default function HomePage() {
                 </div>
                 <CountdownDisplay
                   targetTime={targetDate}
-                  onCancel={handleCancel}
+                  onCancel={() => handleCancel()}
                   onPopOut={pip.enterPiP}
                   pipSupported={pip.isSupported}
                   pipActive={pip.isActive}
@@ -241,14 +306,44 @@ export default function HomePage() {
 
           {hydrated && sessions.length > 0 && (
             <motion.div
-              className="mt-8 w-full max-w-md"
+              className="mt-6 w-full max-w-md"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.2 }}
             >
               <div className="glass-card p-5">
-                <SessionList sessions={sessions} onClear={clearHistory} />
+                <SessionList
+                  sessions={sessions}
+                  activeSessions={activeSessions}
+                  selectedSessionId={selectedSessionId}
+                  onSelectSession={setSelectedSessionId}
+                  onCancelSession={handleCancel}
+                  onClearHistory={clearHistory}
+                  onRemoveSession={removeSession}
+                  onAddTimer={() => setShowAddForm(true)}
+                />
               </div>
+            </motion.div>
+          )}
+
+          {showAddForm && isActive && (
+            <motion.div
+              className="mt-4 w-full max-w-md glass-card p-6"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm font-medium text-slate-400">{t.timer.addAnother}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="text-xs text-slate-500 hover:text-slate-300"
+                >
+                  {t.timer.cancel}
+                </button>
+              </div>
+              <TimeInput onStart={handleStart} />
             </motion.div>
           )}
         </main>

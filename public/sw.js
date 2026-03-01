@@ -42,8 +42,8 @@ self.addEventListener("message", (event) => {
       const existing = notifications.find((n) => n.tag === LIVE_TAG);
       const options = {
         body: body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
+        icon: "/icons/icon-192.svg",
+        badge: "/icons/icon-192.svg",
         tag: LIVE_TAG,
         renotify: false,
         requireInteraction: true,
@@ -68,8 +68,8 @@ self.addEventListener("message", (event) => {
     });
     self.registration.showNotification(d?.title || "Count23", {
       body: d?.body || "Your countdown has finished!",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/icons/icon-192.svg",
+      badge: "/icons/icon-192.svg",
       vibrate: [200, 100, 200],
       tag: "count23-complete",
       renotify: true,
@@ -79,8 +79,8 @@ self.addEventListener("message", (event) => {
   if (d?.type === "COUNTDOWN_MILESTONE") {
     self.registration.showNotification("Count23", {
       body: d.body,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/icons/icon-192.svg",
+      badge: "/icons/icon-192.svg",
       vibrate: [100, 50, 100],
       tag: "count23-milestone",
       renotify: true,
@@ -100,8 +100,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title || "Count23", {
       body: payload.body,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/icons/icon-192.svg",
+      badge: "/icons/icon-192.svg",
       tag: "count23-push",
       renotify: true,
       vibrate: [200, 100, 200],
