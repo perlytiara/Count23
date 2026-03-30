@@ -15,13 +15,11 @@ const DRAFT_KEY = "count23_input_draft";
 
 interface TimeInputProps {
   onStart: (target: Date) => void;
-  defaultMode?: InputMode;
-  compact?: boolean;
 }
 
-export function TimeInput({ onStart, defaultMode = "quick", compact = false }: TimeInputProps) {
+export function TimeInput({ onStart }: TimeInputProps) {
   const { t } = useLocale();
-  const [mode, setMode] = useState<InputMode>(defaultMode);
+  const [mode, setMode] = useState<InputMode>("datetime");
   const [timeValue, setTimeValue] = useState("");
   const [datetimeValue, setDatetimeValue] = useState("");
   const [minLocal, setMinLocal] = useState(() => toDatetimeLocalValue(new Date()));
@@ -30,10 +28,6 @@ export function TimeInput({ onStart, defaultMode = "quick", compact = false }: T
   const refreshMin = useCallback(() => {
     setMinLocal(toDatetimeLocalValue(new Date()));
   }, []);
-
-  useEffect(() => {
-    setMode(defaultMode);
-  }, [defaultMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -100,7 +94,7 @@ export function TimeInput({ onStart, defaultMode = "quick", compact = false }: T
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className={`flex flex-col items-center ${compact ? "gap-3" : "gap-4"}`}
+      className="flex flex-col items-center gap-4"
     >
       <div
         className="flex w-full max-w-sm flex-wrap justify-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1"

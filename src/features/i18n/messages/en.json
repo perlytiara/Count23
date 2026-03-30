@@ -48,7 +48,10 @@
     "empty": "No sessions yet",
     "clear": "Clear history",
     "remove": "Remove",
-    "addTimer": "Add timer"
+    "addTimer": "Add timer",
+    "edit": "Edit",
+    "editTarget": "Change target",
+    "save": "Save"
   },
   "notifications": {
     "enable": "Enable notifications",

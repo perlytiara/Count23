@@ -83,6 +83,26 @@ export function useSession() {
     [sessions, persist],
   );
 
+  const updateSessionTarget = useCallback(
+    (id: string, nextTarget: Date) => {
+      const now = Date.now();
+      const nextDuration = nextTarget.getTime() - now;
+      if (nextDuration <= 0) return;
+      persist(
+        sessions.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                targetTime: nextTarget.toISOString(),
+                totalDuration: nextDuration,
+              }
+            : s,
+        ),
+      );
+    },
+    [sessions, persist],
+  );
+
   return {
     sessions,
     hydrated,
@@ -93,5 +113,6 @@ export function useSession() {
     getActiveSession,
     getActiveSessions,
     removeSession,
+    updateSessionTarget,
   };
 }

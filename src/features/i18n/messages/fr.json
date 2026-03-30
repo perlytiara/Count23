@@ -48,7 +48,10 @@
     "empty": "Aucune session",
     "clear": "Effacer l'historique",
     "remove": "Supprimer",
-    "addTimer": "Ajouter un minuteur"
+    "addTimer": "Ajouter un minuteur",
+    "edit": "Modifier",
+    "editTarget": "Changer la cible",
+    "save": "Enregistrer"
   },
   "notifications": {
     "enable": "Activer les notifications",

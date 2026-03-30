@@ -1,6 +1,6 @@
 "use client";
 
-import type { AppSettings, AppTheme, InputMode } from "../hooks/useSettings";
+import type { AppSettings, AppTheme } from "../hooks/useSettings";
 
 interface SettingsPanelProps {
   open: boolean;
@@ -10,16 +10,11 @@ interface SettingsPanelProps {
     close: string;
     theme: string;
     showMilliseconds: string;
-    compactMode: string;
-    defaultInputMode: string;
     themes: Record<AppTheme, string>;
-    modes: Record<InputMode, string>;
   };
   onClose: () => void;
   onThemeChange: (theme: AppTheme) => void;
   onShowMillisecondsChange: (enabled: boolean) => void;
-  onCompactModeChange: (enabled: boolean) => void;
-  onDefaultInputModeChange: (mode: InputMode) => void;
 }
 
 export function SettingsPanel({
@@ -29,8 +24,6 @@ export function SettingsPanel({
   onClose,
   onThemeChange,
   onShowMillisecondsChange,
-  onCompactModeChange,
-  onDefaultInputModeChange,
 }: SettingsPanelProps) {
   if (!open) return null;
 
@@ -69,47 +62,15 @@ export function SettingsPanel({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-              <span className="text-sm text-slate-200">{labels.showMilliseconds}</span>
-              <input
-                type="checkbox"
-                checked={settings.showMilliseconds}
-                onChange={(e) => onShowMillisecondsChange(e.target.checked)}
-                className="h-4 w-4 accent-blue-500"
-              />
-            </label>
-
-            <label className="flex cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-              <span className="text-sm text-slate-200">{labels.compactMode}</span>
-              <input
-                type="checkbox"
-                checked={settings.compactMode}
-                onChange={(e) => onCompactModeChange(e.target.checked)}
-                className="h-4 w-4 accent-blue-500"
-              />
-            </label>
-          </div>
-
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{labels.defaultInputMode}</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(labels.modes) as InputMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => onDefaultInputModeChange(mode)}
-                  className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
-                    settings.defaultInputMode === mode
-                      ? "border-white/40 bg-white/15 text-white"
-                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                  }`}
-                >
-                  {labels.modes[mode]}
-                </button>
-              ))}
-            </div>
-          </div>
+          <label className="flex cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+            <span className="text-sm text-slate-200">{labels.showMilliseconds}</span>
+            <input
+              type="checkbox"
+              checked={settings.showMilliseconds}
+              onChange={(e) => onShowMillisecondsChange(e.target.checked)}
+              className="h-4 w-4 accent-blue-500"
+            />
+          </label>
         </div>
       </div>
     </div>
