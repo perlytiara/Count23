@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/features/i18n";
 import {
@@ -11,13 +11,17 @@ import {
 
 type InputMode = "quick" | "datetime";
 
+const DRAFT_KEY = "count23_input_draft";
+
 interface TimeInputProps {
   onStart: (target: Date) => void;
+  defaultMode?: InputMode;
+  compact?: boolean;
 }
 
-export function TimeInput({ onStart }: TimeInputProps) {
+export function TimeInput({ onStart, defaultMode = "quick", compact = false }: TimeInputProps) {
   const { t } = useLocale();
-  const [mode, setMode] = useState<InputMode>("quick");
+  const [mode, setMode] = useState<InputMode>(defaultMode);
   const [timeValue, setTimeValue] = useState("");
   const [datetimeValue, setDatetimeValue] = useState("");
   const [minLocal, setMinLocal] = useState(() => toDatetimeLocalValue(new Date()));
@@ -26,6 +30,50 @@ export function TimeInput({ onStart }: TimeInputProps) {
   const refreshMin = useCallback(() => {
     setMinLocal(toDatetimeLocalValue(new Date()));
   }, []);
+
+  useEffect(() => {
+    setMode(defaultMode);
+  }, [defaultMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as {
+        mode?: InputMode;
+        timeValue?: string;
+        datetimeValue?: string;
+      };
+      if (parsed.mode === "quick" || parsed.mode === "datetime") setMode(parsed.mode);
+      if (typeof parsed.timeValue === "string") setTimeValue(parsed.timeValue);
+      if (typeof parsed.datetimeValue === "string") setDatetimeValue(parsed.datetimeValue);
+    } catch {
+      // Ignore malformed draft and keep defaults.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        mode,
+        timeValue,
+        datetimeValue,
+      }),
+    );
+  }, [mode, timeValue, datetimeValue]);
+
+  const addQuickOffset = useCallback(
+    (hours: number) => {
+      const target = new Date(Date.now() + hours * 3_600_000);
+      setDatetimeValue(toDatetimeLocalValue(target));
+      setMode("datetime");
+      setError(null);
+    },
+    [setDatetimeValue],
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +100,7 @@ export function TimeInput({ onStart }: TimeInputProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col items-center gap-4"
+      className={`flex flex-col items-center ${compact ? "gap-3" : "gap-4"}`}
     >
       <div
         className="flex w-full max-w-sm flex-wrap justify-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1"
@@ -94,14 +142,45 @@ export function TimeInput({ onStart }: TimeInputProps) {
         {mode === "quick" ? t.timer.setTarget : t.timer.pickDateTime}
       </label>
 
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => addQuickOffset(1)}
+          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+        >
+          +1h
+        </button>
+        <button
+          type="button"
+          onClick={() => addQuickOffset(3)}
+          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+        >
+          +3h
+        </button>
+        <button
+          type="button"
+          onClick={() => addQuickOffset(12)}
+          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+        >
+          +12h
+        </button>
+        <button
+          type="button"
+          onClick={() => addQuickOffset(24)}
+          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+        >
+          +1d
+        </button>
+      </div>
+
       {mode === "quick" ? (
         <input
           type="time"
           value={timeValue}
           onChange={(e) => setTimeValue(e.target.value)}
           required
-          className="w-48 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center
-                     text-2xl font-mono text-white outline-none transition-all
+          className="w-52 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center
+                     text-xl font-mono text-white outline-none transition-all sm:text-2xl
                      focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20
                      [&::-webkit-calendar-picker-indicator]:invert"
         />
@@ -116,7 +195,7 @@ export function TimeInput({ onStart }: TimeInputProps) {
             setError(null);
           }}
           required
-          className="w-full max-w-xs rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center
+          className="w-full max-w-sm rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center
                      text-lg font-mono text-white outline-none transition-all
                      focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20
                      [&::-webkit-calendar-picker-indicator]:invert"

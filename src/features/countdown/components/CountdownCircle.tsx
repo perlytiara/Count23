@@ -6,10 +6,11 @@ import { padTwo } from "../utils/time";
 
 interface CountdownCircleProps {
   state: CountdownState;
-  labels: { hours: string; minutes: string; seconds: string };
+  labels: { days: string; hours: string; minutes: string; seconds: string };
+  showMilliseconds?: boolean;
 }
 
-const RADIUS = 140;
+const RADIUS = 116;
 const STROKE = 8;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const SIZE = (RADIUS + STROKE) * 2;
@@ -27,8 +28,8 @@ function getGlowColor(progress: number): string {
   return "rgba(239, 68, 68, 0.4)";
 }
 
-export function CountdownCircle({ state, labels }: CountdownCircleProps) {
-  const { hours, minutes, seconds, milliseconds, progress, isComplete } = state;
+export function CountdownCircle({ state, labels, showMilliseconds = true }: CountdownCircleProps) {
+  const { days, hours, minutes, seconds, milliseconds, progress, isComplete } = state;
   const offset = CIRCUMFERENCE * (1 - progress);
   const color = isComplete ? "#22c55e" : getColor(progress);
   const glow = isComplete ? "rgba(34, 197, 94, 0.4)" : getGlowColor(progress);
@@ -85,7 +86,12 @@ export function CountdownCircle({ state, labels }: CountdownCircleProps) {
         )}
       </svg>
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
+        {days > 0 && (
+          <div className="mb-1 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-300 sm:text-sm">
+            {days} {labels.days}
+          </div>
+        )}
         <div className="flex items-baseline gap-1 tabular-nums">
           <span className="text-5xl font-bold tracking-tight sm:text-6xl" style={{ color }}>
             {padTwo(hours)}
@@ -100,11 +106,9 @@ export function CountdownCircle({ state, labels }: CountdownCircleProps) {
           </span>
         </div>
 
-        <div className="mt-1 font-mono text-lg text-slate-500">
-          .{padTwo(milliseconds)}
-        </div>
+        {showMilliseconds && <div className="mt-1 font-mono text-lg text-slate-500">.{padTwo(milliseconds)}</div>}
 
-        <div className="mt-3 flex gap-6 text-[10px] uppercase tracking-widest text-slate-500">
+        <div className="mt-3 flex gap-5 text-[10px] uppercase tracking-widest text-slate-500">
           <span>{labels.hours}</span>
           <span>{labels.minutes}</span>
           <span>{labels.seconds}</span>

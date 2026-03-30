@@ -50,15 +50,16 @@ export function isSameCalendarDay(a: Date, b: Date): boolean {
 
 export function msToTimeComponents(ms: number) {
   if (ms <= 0) {
-    return { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 };
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 0 };
   }
 
-  const hours = Math.floor(ms / 3_600_000);
+  const days = Math.floor(ms / 86_400_000);
+  const hours = Math.floor((ms % 86_400_000) / 3_600_000);
   const minutes = Math.floor((ms % 3_600_000) / 60_000);
   const seconds = Math.floor((ms % 60_000) / 1_000);
   const milliseconds = Math.floor((ms % 1_000) / 10);
 
-  return { hours, minutes, seconds, milliseconds };
+  return { days, hours, minutes, seconds, milliseconds };
 }
 
 export function padTwo(n: number): string {
@@ -88,12 +89,25 @@ export function formatTargetDisplay(date: Date, locale: string): string {
 /** Format remaining ms as "2h 15m 33s" or "15m 33s" for notifications. */
 export function formatRemaining(ms: number): string {
   if (ms <= 0) return "0s";
-  const hours = Math.floor(ms / 3_600_000);
+  const days = Math.floor(ms / 86_400_000);
+  const hours = Math.floor((ms % 86_400_000) / 3_600_000);
   const minutes = Math.floor((ms % 3_600_000) / 60_000);
   const seconds = Math.floor((ms % 60_000) / 1_000);
   const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
   if (hours > 0) parts.push(`${hours}h`);
   if (minutes > 0) parts.push(`${minutes}m`);
   parts.push(`${seconds}s`);
+  return parts.join(" ");
+}
+
+export function formatDurationLong(ms: number, locale: string): string {
+  const { days, hours, minutes, seconds } = msToTimeComponents(ms);
+  const unit = new Intl.NumberFormat(locale);
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${unit.format(days)}d`);
+  if (hours > 0 || days > 0) parts.push(`${unit.format(hours)}h`);
+  if (minutes > 0 || hours > 0 || days > 0) parts.push(`${unit.format(minutes)}m`);
+  parts.push(`${unit.format(seconds)}s`);
   return parts.join(" ");
 }

@@ -15,6 +15,7 @@ import {
 import { formatRemaining } from "@/features/countdown/utils/time";
 import { NotificationToggle, useNotifications } from "@/features/notifications";
 import { LocaleContext, getMessages, type Locale } from "@/features/i18n";
+import { SettingsPanel, useSettings } from "@/features/settings";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { InstallPrompt } from "@/components/InstallPrompt";
 
@@ -31,9 +32,11 @@ export default function HomePage() {
   const [totalDuration, setTotalDuration] = useState(0);
   const [showComplete, setShowComplete] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   const t = useMemo(() => getMessages(locale), [locale]);
+  const { settings, setTheme, setShowMilliseconds, setCompactMode, setDefaultInputMode } = useSettings();
   const {
     sessions,
     hydrated,
@@ -41,7 +44,6 @@ export default function HomePage() {
     completeSession,
     cancelSession,
     clearHistory,
-    getActiveSession,
     getActiveSessions,
     removeSession,
   } = useSession();
@@ -49,7 +51,6 @@ export default function HomePage() {
   const pip = usePictureInPicture(targetDate);
 
   const activeSessions = getActiveSessions();
-  const activeSession = getActiveSession();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   const selectedSession =
@@ -232,13 +233,22 @@ export default function HomePage() {
   if (!mounted) return null;
 
   const isActive = targetDate !== null && !showComplete;
+  const contentMax = settings.compactMode ? "max-w-5xl" : "max-w-6xl";
+  const cardPadding = settings.compactMode ? "p-5 sm:p-7" : "p-6 sm:p-10";
 
   return (
     <LocaleContext value={{ locale, setLocale, t }}>
-      <div className="flex min-h-dvh flex-col min-h-[100dvh] overflow-x-hidden touch-pan-y">
-        <header className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 pt-[max(0.75rem,env(safe-area-inset-top))] shrink-0">
-          <h1 className="text-lg font-bold text-gradient sm:text-xl">Count23</h1>
+      <div className="flex min-h-dvh min-h-[100dvh] flex-col overflow-x-hidden touch-pan-y">
+        <header className="mx-auto flex w-full items-center justify-between gap-2 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:py-4 shrink-0">
+          <h1 className="text-lg font-bold text-gradient sm:text-xl md:text-2xl">Count23</h1>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/10"
+            >
+              {t.settings.open}
+            </button>
             <NotificationToggle
               permission={permission}
               supported={supported}
@@ -249,7 +259,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col items-center justify-center px-4 pb-8">
+        <main className={`mx-auto flex w-full ${contentMax} flex-1 flex-col items-center justify-center px-4 pb-8`}>
           <AnimatePresence mode="wait">
             {showComplete ? (
               <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -258,23 +268,27 @@ export default function HomePage() {
             ) : isActive ? (
               <motion.div
                 key="countdown"
-                className="flex flex-col items-center gap-6"
+                className="flex w-full flex-col items-center gap-5 sm:gap-6"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
               >
-                <div className="glass-card glow-blue p-6 sm:p-10">
+                <div className={`glass-card glow-blue w-full max-w-xl ${cardPadding}`}>
                   <CountdownCircle
                     state={state}
                     labels={{
+                      days: t.timer.days,
                       hours: t.timer.hours,
                       minutes: t.timer.minutes,
                       seconds: t.timer.seconds,
                     }}
+                    showMilliseconds={settings.showMilliseconds}
                   />
                 </div>
                 <CountdownDisplay
                   targetTime={targetDate}
+                  state={state}
+                  totalDuration={totalDuration}
                   onCancel={() => handleCancel()}
                   onPopOut={pip.enterPiP}
                   pipSupported={pip.isSupported}
@@ -284,7 +298,7 @@ export default function HomePage() {
             ) : (
               <motion.div
                 key="input"
-                className="flex flex-col items-center gap-8"
+                className="flex w-full flex-col items-center gap-6 sm:gap-8"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -296,8 +310,12 @@ export default function HomePage() {
                   <p className="text-sm text-slate-400">{t.app.tagline}</p>
                 </div>
 
-                <div className="glass-card p-8 sm:p-10">
-                  <TimeInput onStart={handleStart} />
+                <div className={`glass-card w-full max-w-xl ${settings.compactMode ? "p-6 sm:p-7" : "p-8 sm:p-10"}`}>
+                  <TimeInput
+                    onStart={handleStart}
+                    compact={settings.compactMode}
+                    defaultMode={settings.defaultInputMode}
+                  />
                 </div>
               </motion.div>
             )}
@@ -305,7 +323,7 @@ export default function HomePage() {
 
           {hydrated && sessions.length > 0 && (
             <motion.div
-              className="mt-6 w-full max-w-md"
+              className="mt-6 w-full max-w-2xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -327,7 +345,7 @@ export default function HomePage() {
 
           {showAddForm && isActive && (
             <motion.div
-              className="mt-4 w-full max-w-md glass-card p-6"
+              className={`mt-4 w-full max-w-2xl glass-card ${settings.compactMode ? "p-4" : "p-6"}`}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
@@ -342,7 +360,11 @@ export default function HomePage() {
                   {t.timer.cancel}
                 </button>
               </div>
-              <TimeInput onStart={handleStart} />
+              <TimeInput
+                onStart={handleStart}
+                compact={settings.compactMode}
+                defaultMode={settings.defaultInputMode}
+              />
             </motion.div>
           )}
         </main>
@@ -350,6 +372,34 @@ export default function HomePage() {
         <footer className="pb-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-[10px] text-slate-600 shrink-0">
           Count23 &middot; {new Date().getFullYear()}
         </footer>
+
+        <SettingsPanel
+          open={showSettings}
+          settings={settings}
+          labels={{
+            title: t.settings.title,
+            close: t.settings.close,
+            theme: t.settings.theme,
+            showMilliseconds: t.settings.showMilliseconds,
+            compactMode: t.settings.compactMode,
+            defaultInputMode: t.settings.defaultInputMode,
+            themes: {
+              midnight: t.settings.themeMidnight,
+              ocean: t.settings.themeOcean,
+              sunset: t.settings.themeSunset,
+              forest: t.settings.themeForest,
+            },
+            modes: {
+              quick: t.timer.modeQuick,
+              datetime: t.timer.modePickDate,
+            },
+          }}
+          onClose={() => setShowSettings(false)}
+          onThemeChange={setTheme}
+          onShowMillisecondsChange={setShowMilliseconds}
+          onCompactModeChange={setCompactMode}
+          onDefaultInputModeChange={setDefaultInputMode}
+        />
       </div>
     </LocaleContext>
   );

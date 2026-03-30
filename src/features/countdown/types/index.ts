@@ -8,6 +8,7 @@ export interface CountdownSession {
 }
 
 export interface CountdownState {
+  days: number;
   hours: number;
   minutes: number;
   seconds: number;
