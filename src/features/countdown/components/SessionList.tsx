@@ -56,7 +56,7 @@ export function SessionList({
 
   if (sessions.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-slate-500">
+      <p className="py-6 text-center text-sm text-slate-300">
         {t.sessions.empty}
       </p>
     );
@@ -65,7 +65,7 @@ export function SessionList({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
           {t.sessions.title}
         </h3>
         {activeSessions.length > 0 && (
@@ -81,7 +81,7 @@ export function SessionList({
 
       {activeSessions.length > 0 && (
         <div className="flex flex-col gap-2.5">
-          <span className="text-[10px] uppercase tracking-wider text-slate-500">
+          <span className="text-[10px] uppercase tracking-wider text-slate-300">
             {t.sessions.active}
           </span>
           <AnimatePresence mode="popLayout">
@@ -107,7 +107,7 @@ export function SessionList({
                       <span className="block text-base font-semibold text-slate-100 truncate">
                         {formatTargetDisplay(target, locale)}
                       </span>
-                      <span className="text-xs text-slate-400 tabular-nums">
+                      <span className="text-xs text-slate-200 tabular-nums">
                         {formatRemaining(remaining)} left
                       </span>
                     </div>
@@ -145,7 +145,7 @@ export function SessionList({
 
                   {isEditing && (
                     <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3" onClick={(e) => e.stopPropagation()}>
-                      <label className="mb-2 block text-[11px] uppercase tracking-wider text-slate-400">{t.sessions.editTarget}</label>
+                      <label className="mb-2 block text-[11px] uppercase tracking-wider text-slate-300">{t.sessions.editTarget}</label>
                       <input
                         type="datetime-local"
                         value={editValue}
@@ -196,13 +196,13 @@ export function SessionList({
       {hasHistory && (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider text-slate-500">
+            <span className="text-[10px] uppercase tracking-wider text-slate-300">
               {t.sessions.completed} / {t.sessions.cancelled}
             </span>
             <button
               type="button"
               onClick={onClearHistory}
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              className="text-xs text-slate-300 hover:text-slate-100 transition-colors"
             >
               {t.sessions.clear}
             </button>
@@ -218,11 +218,11 @@ export function SessionList({
                 className="flex items-center justify-between rounded-xl bg-white/[0.02] px-4 py-2.5 border border-white/5"
               >
                 <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-sm text-slate-300">
+                  <span className="text-sm text-slate-200">
                     {formatTimeLocale(new Date(session.targetTime), locale)}
                   </span>
                   {session.label && (
-                    <span className="text-xs text-slate-500 truncate">{session.label}</span>
+                    <span className="text-xs text-slate-300 truncate">{session.label}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -232,7 +232,7 @@ export function SessionList({
                   <button
                     type="button"
                     onClick={() => onRemoveSession(session.id)}
-                    className="rounded px-2 py-0.5 text-[10px] text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="rounded px-2 py-0.5 text-[10px] text-slate-300 hover:text-red-300 hover:bg-red-500/10 transition-colors"
                     aria-label={t.sessions.remove}
                   >
                     {t.sessions.remove}

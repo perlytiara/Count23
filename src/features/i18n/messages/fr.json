@@ -20,6 +20,8 @@
     "remaining": "Temps restant",
     "progress": "Progression",
     "total": "Durée totale",
+    "showDetails": "Voir les détails",
+    "hideDetails": "Masquer les détails",
     "targetLabel": "Compte à rebours jusqu'à",
     "completed": "C'est l'heure !",
     "noActive": "Définissez une heure pour démarrer le compte à rebours",

@@ -20,6 +20,8 @@
     "remaining": "Remaining",
     "progress": "Progress",
     "total": "Total",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
     "targetLabel": "Counting down to",
     "completed": "Time's up!",
     "noActive": "Set a time to start counting down",
