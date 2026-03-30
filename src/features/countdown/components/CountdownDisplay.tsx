@@ -32,13 +32,13 @@ export function CountdownDisplay({
   return (
     <div className="flex w-full max-w-2xl flex-col gap-3">
       <div className="grid gap-2 sm:grid-cols-2">
-        <div className="rounded-xl border border-white/20 bg-white/[0.05] px-3 py-2 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-slate-300">{t.timer.targetLabel}</p>
-          <p className="font-mono text-sm text-slate-100 sm:text-base">{formatTargetDisplay(targetTime, locale)}</p>
+        <div className="rounded-xl border border-white/20 bg-white/[0.08] px-3 py-2 text-center">
+          <p className="text-[10px] uppercase tracking-wider ui-text-muted">{t.timer.targetLabel}</p>
+          <p className="font-mono text-sm ui-text-strong sm:text-base">{formatTargetDisplay(targetTime, locale)}</p>
         </div>
-        <div className="rounded-xl border border-white/20 bg-white/[0.05] px-3 py-2 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-slate-300">{t.timer.remaining}</p>
-          <p className="font-mono text-sm text-slate-100 sm:text-base">{formatDurationLong(state.totalRemaining, locale)}</p>
+        <div className="rounded-xl border border-white/20 bg-white/[0.08] px-3 py-2 text-center">
+          <p className="text-[10px] uppercase tracking-wider ui-text-muted">{t.timer.remaining}</p>
+          <p className="font-mono text-sm ui-text-strong sm:text-base">{formatDurationLong(state.totalRemaining, locale)}</p>
         </div>
       </div>
 
@@ -46,8 +46,9 @@ export function CountdownDisplay({
         <button
           type="button"
           onClick={() => setShowDetails((prev) => !prev)}
-          className="rounded-full border border-white/20 bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-slate-100 transition-colors hover:bg-white/[0.1]"
+          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-3 py-1.5 text-xs font-medium ui-text-strong transition-colors hover:bg-white/[0.14]"
         >
+          <span className="ui-ios-icon text-[10px]">{showDetails ? "−" : "+"}</span>
           {showDetails ? t.timer.hideDetails : t.timer.showDetails}
         </button>
       </div>
@@ -60,13 +61,13 @@ export function CountdownDisplay({
             exit={{ opacity: 0, height: 0 }}
             className="grid gap-2 overflow-hidden sm:grid-cols-2"
           >
-            <div className="rounded-xl border border-white/20 bg-white/[0.05] px-3 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-slate-300">{t.timer.progress}</p>
-              <p className="font-mono text-sm text-slate-100 sm:text-base">{progressPercent}%</p>
+            <div className="rounded-xl border border-white/20 bg-white/[0.08] px-3 py-2 text-center">
+              <p className="text-[10px] uppercase tracking-wider ui-text-muted">{t.timer.progress}</p>
+              <p className="font-mono text-sm ui-text-strong sm:text-base">{progressPercent}%</p>
             </div>
-            <div className="rounded-xl border border-white/20 bg-white/[0.05] px-3 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-slate-300">{t.timer.total}</p>
-              <p className="font-mono text-sm text-slate-100 sm:text-base">{formatDurationLong(totalDuration, locale)}</p>
+            <div className="rounded-xl border border-white/20 bg-white/[0.08] px-3 py-2 text-center">
+              <p className="text-[10px] uppercase tracking-wider ui-text-muted">{t.timer.total}</p>
+              <p className="font-mono text-sm ui-text-strong sm:text-base">{formatDurationLong(totalDuration, locale)}</p>
             </div>
           </motion.div>
         )}

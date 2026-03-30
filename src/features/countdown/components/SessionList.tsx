@@ -56,7 +56,7 @@ export function SessionList({
 
   if (sessions.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-slate-300">
+      <p className="py-6 text-center text-sm ui-text-muted">
         {t.sessions.empty}
       </p>
     );
@@ -65,14 +65,14 @@ export function SessionList({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+        <h3 className="text-xs font-semibold uppercase tracking-wider ui-text-muted">
           {t.sessions.title}
         </h3>
         {activeSessions.length > 0 && (
           <button
             type="button"
             onClick={onAddTimer}
-            className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10"
+            className="rounded-full border border-white/20 bg-white/[0.08] px-3 py-1.5 text-xs font-medium ui-text-body transition-colors hover:bg-white/[0.14]"
           >
             + {t.sessions.addTimer}
           </button>
@@ -81,7 +81,7 @@ export function SessionList({
 
       {activeSessions.length > 0 && (
         <div className="flex flex-col gap-2.5">
-          <span className="text-[10px] uppercase tracking-wider text-slate-300">
+          <span className="text-[10px] uppercase tracking-wider ui-text-muted">
             {t.sessions.active}
           </span>
           <AnimatePresence mode="popLayout">
@@ -104,10 +104,10 @@ export function SessionList({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <span className="block text-base font-semibold text-slate-100 truncate">
+                      <span className="block text-base font-semibold ui-text-strong truncate">
                         {formatTargetDisplay(target, locale)}
                       </span>
-                      <span className="text-xs text-slate-200 tabular-nums">
+                      <span className="text-xs ui-text-body tabular-nums">
                         {formatRemaining(remaining)} left
                       </span>
                     </div>
@@ -126,7 +126,7 @@ export function SessionList({
                         setEditValue(toDatetimeLocalValue(target));
                         setEditError(null);
                       }}
-                      className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/10"
+                      className="rounded-lg border border-white/20 bg-white/[0.08] px-3 py-1.5 text-xs font-medium ui-text-body hover:bg-white/[0.14]"
                     >
                       {t.sessions.edit}
                     </button>
@@ -145,7 +145,7 @@ export function SessionList({
 
                   {isEditing && (
                     <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3" onClick={(e) => e.stopPropagation()}>
-                      <label className="mb-2 block text-[11px] uppercase tracking-wider text-slate-300">{t.sessions.editTarget}</label>
+                      <label className="mb-2 block text-[11px] uppercase tracking-wider ui-text-muted">{t.sessions.editTarget}</label>
                       <input
                         type="datetime-local"
                         value={editValue}
@@ -154,7 +154,7 @@ export function SessionList({
                           setEditValue(e.target.value);
                           setEditError(null);
                         }}
-                        className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100 outline-none focus:border-blue-500/50"
+                        className="w-full rounded-lg border border-white/20 bg-white/[0.08] px-3 py-2 text-sm ui-text-strong outline-none focus:border-blue-500/50"
                       />
                       {editError && <p className="mt-2 text-xs text-amber-400">{editError}</p>}
                       <div className="mt-3 flex items-center gap-2">
@@ -179,7 +179,7 @@ export function SessionList({
                             setEditingId(null);
                             setEditError(null);
                           }}
-                          className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
+                          className="rounded-lg border border-white/20 px-3 py-1.5 text-xs ui-text-body hover:bg-white/[0.1]"
                         >
                           {t.settings.close}
                         </button>
@@ -196,13 +196,13 @@ export function SessionList({
       {hasHistory && (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider text-slate-300">
+            <span className="text-[10px] uppercase tracking-wider ui-text-muted">
               {t.sessions.completed} / {t.sessions.cancelled}
             </span>
             <button
               type="button"
               onClick={onClearHistory}
-              className="text-xs text-slate-300 hover:text-slate-100 transition-colors"
+              className="text-xs ui-text-body hover:text-white transition-colors"
             >
               {t.sessions.clear}
             </button>
@@ -218,11 +218,11 @@ export function SessionList({
                 className="flex items-center justify-between rounded-xl bg-white/[0.02] px-4 py-2.5 border border-white/5"
               >
                 <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-sm text-slate-200">
+                  <span className="text-sm ui-text-body">
                     {formatTimeLocale(new Date(session.targetTime), locale)}
                   </span>
                   {session.label && (
-                    <span className="text-xs text-slate-300 truncate">{session.label}</span>
+                    <span className="text-xs ui-text-muted truncate">{session.label}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -232,7 +232,7 @@ export function SessionList({
                   <button
                     type="button"
                     onClick={() => onRemoveSession(session.id)}
-                    className="rounded px-2 py-0.5 text-[10px] text-slate-300 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                    className="rounded px-2 py-0.5 text-[10px] ui-text-muted hover:text-red-200 hover:bg-red-500/10 transition-colors"
                     aria-label={t.sessions.remove}
                   >
                     {t.sessions.remove}

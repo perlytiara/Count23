@@ -97,7 +97,7 @@ export function TimeInput({ onStart }: TimeInputProps) {
       className="flex flex-col items-center gap-4"
     >
       <div
-        className="flex w-full max-w-sm flex-wrap justify-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1"
+        className="flex w-full max-w-sm flex-wrap justify-center gap-1 rounded-xl border border-white/20 bg-white/[0.08] p-1"
         role="group"
         aria-label={t.timer.modeGroupLabel}
       >
@@ -110,7 +110,7 @@ export function TimeInput({ onStart }: TimeInputProps) {
           className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
             mode === "quick"
               ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-              : "text-slate-400 hover:text-slate-200"
+              : "ui-text-body hover:text-white"
           }`}
         >
           {t.timer.modeQuick}
@@ -125,14 +125,14 @@ export function TimeInput({ onStart }: TimeInputProps) {
           className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
             mode === "datetime"
               ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-              : "text-slate-400 hover:text-slate-200"
+              : "ui-text-body hover:text-white"
           }`}
         >
           {t.timer.modePickDate}
         </button>
       </div>
 
-      <label className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+      <label className="text-sm font-medium ui-text-muted uppercase tracking-wider">
         {mode === "quick" ? t.timer.setTarget : t.timer.pickDateTime}
       </label>
 
@@ -140,28 +140,28 @@ export function TimeInput({ onStart }: TimeInputProps) {
         <button
           type="button"
           onClick={() => addQuickOffset(1)}
-          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+          className="rounded-lg border border-white/20 bg-white/[0.08] px-2.5 py-1 text-[11px] ui-text-body hover:bg-white/[0.14]"
         >
           +1h
         </button>
         <button
           type="button"
           onClick={() => addQuickOffset(3)}
-          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+          className="rounded-lg border border-white/20 bg-white/[0.08] px-2.5 py-1 text-[11px] ui-text-body hover:bg-white/[0.14]"
         >
           +3h
         </button>
         <button
           type="button"
           onClick={() => addQuickOffset(12)}
-          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+          className="rounded-lg border border-white/20 bg-white/[0.08] px-2.5 py-1 text-[11px] ui-text-body hover:bg-white/[0.14]"
         >
           +12h
         </button>
         <button
           type="button"
           onClick={() => addQuickOffset(24)}
-          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+          className="rounded-lg border border-white/20 bg-white/[0.08] px-2.5 py-1 text-[11px] ui-text-body hover:bg-white/[0.14]"
         >
           +1d
         </button>
@@ -173,7 +173,7 @@ export function TimeInput({ onStart }: TimeInputProps) {
           value={timeValue}
           onChange={(e) => setTimeValue(e.target.value)}
           required
-          className="w-52 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center
+          className="w-52 rounded-xl border border-white/20 bg-white/[0.08] px-4 py-3 text-center
                      text-xl font-mono text-white outline-none transition-all sm:text-2xl
                      focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20
                      [&::-webkit-calendar-picker-indicator]:invert"
@@ -189,7 +189,7 @@ export function TimeInput({ onStart }: TimeInputProps) {
             setError(null);
           }}
           required
-          className="w-full max-w-sm rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center
+          className="w-full max-w-sm rounded-xl border border-white/20 bg-white/[0.08] px-4 py-3 text-center
                      text-lg font-mono text-white outline-none transition-all
                      focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20
                      [&::-webkit-calendar-picker-indicator]:invert"

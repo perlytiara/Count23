@@ -259,8 +259,9 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => setShowSettings(true)}
-              className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/[0.08] px-3 py-1.5 text-xs font-medium ui-text-strong hover:bg-white/[0.14]"
             >
+              <span className="ui-ios-icon text-[11px]">⚙</span>
               {t.settings.open}
             </button>
             <NotificationToggle
@@ -318,10 +319,10 @@ export default function HomePage() {
                 exit={{ opacity: 0 }}
               >
                 <div className="flex flex-col items-center gap-2 text-center">
-                  <h2 className="text-3xl font-bold text-white sm:text-4xl">
+                  <h2 className="text-3xl font-bold ui-text-strong sm:text-4xl">
                     {t.app.title}
                   </h2>
-                  <p className="text-sm text-slate-400">{t.app.tagline}</p>
+                  <p className="text-sm ui-text-muted">{t.app.tagline}</p>
                 </div>
 
                 <div className="glass-card w-full max-w-xl p-7 sm:p-10">
@@ -362,11 +363,11 @@ export default function HomePage() {
               exit={{ opacity: 0, height: 0 }}
             >
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-slate-400">{t.timer.addAnother}</span>
+                <span className="text-sm font-medium ui-text-muted">{t.timer.addAnother}</span>
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="text-xs text-slate-500 hover:text-slate-300"
+                  className="text-xs ui-text-dim hover:text-white"
                 >
                   {t.timer.cancel}
                 </button>

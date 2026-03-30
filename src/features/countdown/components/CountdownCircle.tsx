@@ -88,7 +88,7 @@ export function CountdownCircle({ state, labels, showMilliseconds = true }: Coun
 
       <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
         {days > 0 && (
-          <div className="mb-1 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-300 sm:text-sm">
+          <div className="mb-1 rounded-full border border-white/20 bg-white/[0.08] px-3 py-1 text-xs font-semibold uppercase tracking-wider ui-text-body sm:text-sm">
             {days} {labels.days}
           </div>
         )}
@@ -96,19 +96,19 @@ export function CountdownCircle({ state, labels, showMilliseconds = true }: Coun
           <span className="text-5xl font-bold tracking-tight sm:text-6xl" style={{ color }}>
             {padTwo(hours)}
           </span>
-          <span className="text-3xl font-light text-slate-500 sm:text-4xl">:</span>
+          <span className="text-3xl font-light ui-text-muted sm:text-4xl">:</span>
           <span className="text-5xl font-bold tracking-tight sm:text-6xl" style={{ color }}>
             {padTwo(minutes)}
           </span>
-          <span className="text-3xl font-light text-slate-500 sm:text-4xl">:</span>
+          <span className="text-3xl font-light ui-text-muted sm:text-4xl">:</span>
           <span className="text-5xl font-bold tracking-tight sm:text-6xl" style={{ color }}>
             {padTwo(seconds)}
           </span>
         </div>
 
-        {showMilliseconds && <div className="mt-1 font-mono text-lg text-slate-500">.{padTwo(milliseconds)}</div>}
+        {showMilliseconds && <div className="mt-1 font-mono text-lg ui-text-muted">.{padTwo(milliseconds)}</div>}
 
-        <div className="mt-3 flex gap-5 text-[10px] uppercase tracking-widest text-slate-500">
+        <div className="mt-3 flex gap-5 text-[10px] uppercase tracking-widest ui-text-muted">
           <span>{labels.hours}</span>
           <span>{labels.minutes}</span>
           <span>{labels.seconds}</span>
