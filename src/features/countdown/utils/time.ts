@@ -11,6 +11,43 @@ export function getTargetDate(timeString: string): Date {
   return target;
 }
 
+/** Value for `input type="datetime-local"` min (local). */
+export function toDatetimeLocalValue(d: Date): string {
+  const y = d.getFullYear();
+  const m = padTwo(d.getMonth() + 1);
+  const day = padTwo(d.getDate());
+  const h = padTwo(d.getHours());
+  const min = padTwo(d.getMinutes());
+  return `${y}-${m}-${day}T${h}:${min}`;
+}
+
+/**
+ * Parse `datetime-local` value (YYYY-MM-DDTHH:mm) as local time.
+ * Returns null if invalid or not strictly in the future.
+ */
+export function parseFutureDatetimeLocal(value: string): Date | null {
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const day = Number(m[3]);
+  const h = Number(m[4]);
+  const min = Number(m[5]);
+  if ([y, mo, day, h, min].some((n) => Number.isNaN(n))) return null;
+  const d = new Date(y, mo - 1, day, h, min, 0, 0);
+  if (Number.isNaN(d.getTime())) return null;
+  if (d.getTime() <= Date.now()) return null;
+  return d;
+}
+
+export function isSameCalendarDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
 export function msToTimeComponents(ms: number) {
   if (ms <= 0) {
     return { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 };
@@ -33,6 +70,18 @@ export function formatTimeLocale(date: Date, locale: string): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: locale === "en",
+  }).format(date);
+}
+
+/** Short date + time when target is not today (local calendar). */
+export function formatTargetDisplay(date: Date, locale: string): string {
+  const now = new Date();
+  if (isSameCalendarDay(date, now)) {
+    return formatTimeLocale(date, locale);
+  }
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
   }).format(date);
 }
 

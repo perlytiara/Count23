@@ -17,7 +17,6 @@ import { NotificationToggle, useNotifications } from "@/features/notifications";
 import { LocaleContext, getMessages, type Locale } from "@/features/i18n";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { getTargetDate } from "@/features/countdown/utils/time";
 
 function getInitialLocale(): Locale {
   if (typeof window === "undefined") return "en";
@@ -190,9 +189,9 @@ export default function HomePage() {
   });
 
   const handleStart = useCallback(
-    (timeString: string) => {
-      const target = getTargetDate(timeString);
+    (target: Date) => {
       const duration = target.getTime() - Date.now();
+      if (duration <= 0) return;
       setShowComplete(false);
       setShowAddForm(false);
       const session = createSession(target, duration);

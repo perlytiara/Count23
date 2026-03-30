@@ -5,6 +5,11 @@
   },
   "timer": {
     "setTarget": "Set target time",
+    "modeGroupLabel": "Countdown type",
+    "modeQuick": "Today / tomorrow",
+    "modePickDate": "Pick date & time",
+    "pickDateTime": "Target date & time",
+    "errorPast": "Choose a moment in the future.",
     "start": "Start Countdown",
     "cancel": "Cancel",
     "reset": "New Timer",

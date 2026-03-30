@@ -5,6 +5,11 @@
   },
   "timer": {
     "setTarget": "Définir l'heure cible",
+    "modeGroupLabel": "Type de compte à rebours",
+    "modeQuick": "Aujourd'hui / demain",
+    "modePickDate": "Choisir date et heure",
+    "pickDateTime": "Date et heure cibles",
+    "errorPast": "Choisissez un moment dans le futur.",
     "start": "Lancer le compte à rebours",
     "cancel": "Annuler",
     "reset": "Nouveau minuteur",

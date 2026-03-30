@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useLocale } from "@/features/i18n";
-import { formatTimeLocale } from "../utils/time";
+import { formatTargetDisplay } from "../utils/time";
 
 interface CountdownDisplayProps {
   targetTime: Date;
@@ -26,7 +26,7 @@ export function CountdownDisplay({
       <p className="text-sm text-slate-400">
         <span className="text-slate-500">{t.timer.targetLabel}</span>{" "}
         <span className="font-mono font-medium text-slate-200">
-          {formatTimeLocale(targetTime, locale)}
+          {formatTargetDisplay(targetTime, locale)}
         </span>
       </p>
       <div className="flex items-center gap-2">
