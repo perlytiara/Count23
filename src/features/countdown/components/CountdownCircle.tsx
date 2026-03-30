@@ -6,7 +6,7 @@ import { padTwo } from "../utils/time";
 
 interface CountdownCircleProps {
   state: CountdownState;
-  labels: { days: string; hours: string; minutes: string; seconds: string };
+  labels: { day: string; days: string; hours: string; minutes: string; seconds: string };
   showMilliseconds?: boolean;
 }
 
@@ -89,7 +89,7 @@ export function CountdownCircle({ state, labels, showMilliseconds = true }: Coun
       <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
         {days > 0 && (
           <div className="mb-1 rounded-full border border-white/20 bg-white/[0.08] px-3 py-1 text-xs font-semibold uppercase tracking-wider ui-text-body sm:text-sm">
-            {days} {labels.days}
+            {days} {days === 1 ? labels.day : labels.days}
           </div>
         )}
         <div className="flex items-baseline gap-1 tabular-nums">

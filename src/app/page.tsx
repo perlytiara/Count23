@@ -292,6 +292,7 @@ export default function HomePage() {
                   <CountdownCircle
                     state={state}
                     labels={{
+                      day: t.timer.day,
                       days: t.timer.days,
                       hours: t.timer.hours,
                       minutes: t.timer.minutes,
