@@ -21,11 +21,8 @@ export function toDatetimeLocalValue(d: Date): string {
   return `${y}-${m}-${day}T${h}:${min}`;
 }
 
-/**
- * Parse `datetime-local` value (YYYY-MM-DDTHH:mm) as local time.
- * Returns null if invalid or not strictly in the future.
- */
-export function parseFutureDatetimeLocal(value: string): Date | null {
+/** Parse `datetime-local` value (YYYY-MM-DDTHH:mm) as local time. */
+export function parseDatetimeLocal(value: string): Date | null {
   const m = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
   if (!m) return null;
   const y = Number(m[1]);
@@ -36,8 +33,22 @@ export function parseFutureDatetimeLocal(value: string): Date | null {
   if ([y, mo, day, h, min].some((n) => Number.isNaN(n))) return null;
   const d = new Date(y, mo - 1, day, h, min, 0, 0);
   if (Number.isNaN(d.getTime())) return null;
-  if (d.getTime() <= Date.now()) return null;
   return d;
+}
+
+/**
+ * Parse `datetime-local` value (YYYY-MM-DDTHH:mm) as local time.
+ * Returns null if invalid or not strictly in the future.
+ */
+export function parseFutureDatetimeLocal(value: string): Date | null {
+  const d = parseDatetimeLocal(value);
+  if (!d || d.getTime() <= Date.now()) return null;
+  return d;
+}
+
+/** Default picker value: today, one hour from now (local). */
+export function defaultDatetimeLocalValue(): string {
+  return toDatetimeLocalValue(new Date(Date.now() + 3_600_000));
 }
 
 export function isSameCalendarDay(a: Date, b: Date): boolean {

@@ -80,7 +80,7 @@ function ProposalWorkspace({
   if (!targetTime) return null;
 
   return (
-    <div className="flex w-full flex-col items-center gap-4">
+    <div className="flex w-full max-w-2xl flex-col items-center gap-4">
       <div className="glass-card glow-blue w-full max-w-xl p-6 sm:p-10">
         <CountdownCircle
           state={countdownState}
@@ -240,11 +240,13 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-start px-4 pb-8 pt-6">
+        <main
+          className={`mx-auto flex w-full max-w-6xl flex-1 flex-col items-center px-4 pb-8 ${
+            activeProposal ? "justify-start pt-6" : "justify-center"
+          }`}
+        >
           {!activeProposal ? (
-            <div className="glass-card w-full max-w-xl p-6 sm:p-8">
-              <h2 className="mb-3 text-xl font-bold ui-text-strong">{t.proposal.pickTimeTitle}</h2>
-              <p className="mb-4 text-sm ui-text-muted">{t.proposal.pickTimeSubtitle}</p>
+            <div className="glass-card glow-blue flex w-full max-w-lg flex-col items-center p-8 sm:p-10">
               <TimeInput
                 onStart={(targetTime) => {
                   const created = createInitialProposalState({
