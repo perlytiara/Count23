@@ -10,7 +10,8 @@ interface CountdownDisplayProps {
   targetTime: Date;
   state: CountdownState;
   totalDuration: number;
-  onCancel: () => void;
+  onCancel?: () => void;
+  cancelLabel?: string;
   onPopOut?: () => void;
   pipSupported?: boolean;
   pipActive?: boolean;
@@ -21,6 +22,7 @@ export function CountdownDisplay({
   state,
   totalDuration,
   onCancel,
+  cancelLabel,
   onPopOut,
   pipSupported,
   pipActive,
@@ -87,16 +89,18 @@ export function CountdownDisplay({
             {pipActive ? t.timer.popOutActive : t.timer.popOut}
           </motion.button>
         )}
-        <motion.button
-          type="button"
-          onClick={onCancel}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-1.5
+        {onCancel && (
+          <motion.button
+            type="button"
+            onClick={onCancel}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-1.5
                      text-xs font-medium text-red-200 transition-colors hover:bg-red-500/20"
-        >
-          {t.timer.cancel}
-        </motion.button>
+          >
+            {cancelLabel || t.timer.cancel}
+          </motion.button>
+        )}
       </div>
     </div>
   );

@@ -1,23 +1,28 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { CountdownCircle, CountdownDisplay, useCountdown } from "@/features/countdown";
 import {
-  CountdownCircle,
-  TimeInput,
-  CountdownDisplay,
-  SessionList,
-  SuccessAnimation,
-  useCountdown,
-  usePictureInPicture,
-  useSession,
-} from "@/features/countdown";
-import { formatRemaining } from "@/features/countdown/utils/time";
-import { NotificationToggle, useNotifications } from "@/features/notifications";
+  formatDateTimeWithZoneLabel,
+  formatTargetDisplay,
+  getLocalTimeZoneName,
+} from "@/features/countdown/utils/time";
 import { LocaleContext, getMessages, type Locale } from "@/features/i18n";
 import { SettingsPanel, useSettings } from "@/features/settings";
+import {
+  ProposalComposer,
+  ProposalHistory,
+  ProposalSummary,
+  ShareBar,
+  buildShareUrl,
+  createInitialProposalState,
+  formatProposalHash,
+  getUserTimeZone,
+  parseProposalFromHash,
+  useProposalState,
+  type ProposalState,
+} from "@/features/proposal";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
-import { InstallPrompt } from "@/components/InstallPrompt";
 
 function getInitialLocale(): Locale {
   if (typeof window === "undefined") return "en";
@@ -26,38 +31,171 @@ function getInitialLocale(): Locale {
   return navigator.language.startsWith("fr") ? "fr" : "en";
 }
 
+interface ProposalWorkspaceProps {
+  initialProposal: ProposalState;
+  locale: Locale;
+  showMilliseconds: boolean;
+}
+
+function ProposalWorkspace({ initialProposal, locale, showMilliseconds }: ProposalWorkspaceProps) {
+  const { t } = useMemo(() => ({ t: getMessages(locale) }), [locale]);
+  const [showComposer, setShowComposer] = useState(false);
+  const { proposal, derived, appendPropose, appendConfirm, updateTitle } = useProposalState(initialProposal);
+
+  const localTz = useMemo(() => getLocalTimeZoneName(), []);
+  const shareUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return buildShareUrl(proposal, window.location);
+  }, [proposal]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.history.replaceState(null, "", formatProposalHash(proposal));
+  }, [proposal]);
+
+  const targetTime = derived.effectiveTimeUtc ? new Date(derived.effectiveTimeUtc) : null;
+  const referenceStart = useMemo(() => {
+    const latest = [...proposal.events].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).at(-1);
+    return latest ? new Date(latest.createdAt).getTime() : Date.now();
+  }, [proposal.events]);
+  const totalDuration = targetTime ? Math.max(targetTime.getTime() - referenceStart, 1) : 0;
+  const countdownState = useCountdown({ targetTime, totalDuration });
+
+  const historyItems = useMemo(
+    () =>
+      [...proposal.events]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .map((event) => ({
+          id: event.id,
+          action: event.type === "confirm" ? t.proposal.historyConfirm : t.proposal.historyPropose,
+          byline: `${event.actorLabel || t.proposal.someone} · ${event.actorTimeZone}`,
+          proposedLocal: formatDateTimeWithZoneLabel(new Date(event.proposedTimeUtc), locale, localTz),
+          at: formatDateTimeWithZoneLabel(new Date(event.createdAt), locale, localTz),
+        })),
+    [proposal.events, t, locale, localTz],
+  );
+
+  if (!targetTime) return null;
+
+  const confirmedValue = derived.confirmedTimeUtc
+    ? formatDateTimeWithZoneLabel(new Date(derived.confirmedTimeUtc), locale, proposal.baseTimeZone)
+    : t.proposal.notConfirmed;
+  const pendingValue = derived.pendingProposalTimeUtc
+    ? formatDateTimeWithZoneLabel(new Date(derived.pendingProposalTimeUtc), locale, localTz)
+    : undefined;
+
+  return (
+    <div className="flex w-full flex-col items-center gap-4">
+      <ProposalSummary
+        title={proposal.title || t.proposal.defaultTitle}
+        statusLabel={t.proposal.status}
+        statusValue={
+          derived.isFinished
+            ? t.proposal.statusFinished
+            : derived.hasPendingSuggestion
+              ? t.proposal.statusPending
+              : derived.isConfirmed
+                ? t.proposal.statusConfirmed
+                : t.proposal.statusDraft
+        }
+        meetingLabel={t.proposal.meetingTime}
+        viewerLabel={t.proposal.yourTime}
+        originLabel={t.proposal.originTime}
+        meetingValue={formatTargetDisplay(targetTime, locale)}
+        viewerValue={formatDateTimeWithZoneLabel(targetTime, locale, localTz)}
+        originValue={formatDateTimeWithZoneLabel(targetTime, locale, proposal.baseTimeZone)}
+        pendingLabel={derived.hasPendingSuggestion ? t.proposal.pendingSuggestion : undefined}
+        pendingValue={pendingValue}
+      />
+
+      <div className="glass-card glow-blue w-full max-w-xl p-6 sm:p-10">
+        <CountdownCircle
+          state={countdownState}
+          labels={{
+            day: t.timer.day,
+            days: t.timer.days,
+            hours: t.timer.hours,
+            minutes: t.timer.minutes,
+            seconds: t.timer.seconds,
+          }}
+          showMilliseconds={showMilliseconds}
+        />
+      </div>
+
+      <CountdownDisplay
+        targetTime={targetTime}
+        state={countdownState}
+        totalDuration={totalDuration}
+      />
+
+      <div className="glass-card w-full p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowComposer((prev) => !prev)}
+            className="rounded-lg border border-white/20 bg-white/[0.08] px-3 py-2 text-xs font-semibold ui-text-body hover:bg-white/[0.14]"
+          >
+            {showComposer ? t.proposal.closeEditor : t.proposal.suggestEdit}
+          </button>
+          <button
+            type="button"
+            onClick={() => appendConfirm(getUserTimeZone())}
+            className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500"
+          >
+            {t.proposal.confirmTime}
+          </button>
+          <span className="text-xs ui-text-muted">
+            {t.proposal.confirmedValue}: {confirmedValue}
+          </span>
+        </div>
+      </div>
+
+      {showComposer && (
+        <div className="glass-card w-full p-4">
+          <ProposalComposer
+            titleLabel={t.proposal.titleLabel}
+            titlePlaceholder={t.proposal.titlePlaceholder}
+            actorLabelText={t.proposal.actorLabel}
+            actorPlaceholder={t.proposal.actorPlaceholder}
+            timeLabel={t.proposal.timeLabel}
+            submitLabel={t.proposal.sendSuggestion}
+            futureErrorLabel={t.timer.errorPast}
+            initialTitle={proposal.title}
+            onSubmit={({ title, actorLabel, targetTime: nextTarget }) => {
+              appendPropose(nextTarget.toISOString(), getUserTimeZone(), actorLabel);
+              if (title !== proposal.title) {
+                updateTitle(title || "");
+              }
+              setShowComposer(false);
+            }}
+          />
+        </div>
+      )}
+
+      <ShareBar
+        shareUrl={shareUrl}
+        copyLabel={t.proposal.copyLink}
+        copiedLabel={t.proposal.copied}
+        nativeShareLabel={t.proposal.shareNative}
+      />
+
+      <ProposalHistory
+        title={t.proposal.history}
+        showLabel={t.proposal.showHistory}
+        hideLabel={t.proposal.hideHistory}
+        items={historyItems}
+      />
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [locale, setLocaleState] = useState<Locale>("en");
-  const [targetDate, setTargetDate] = useState<Date | null>(null);
-  const [totalDuration, setTotalDuration] = useState(0);
-  const [showComplete, setShowComplete] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [mounted, setMounted] = useState(false);
-
+  const [proposalFromUrl, setProposalFromUrl] = useState<ProposalState | null>(null);
   const t = useMemo(() => getMessages(locale), [locale]);
-  const { settings, setTheme, setShowMilliseconds } = useSettings();
-  const {
-    sessions,
-    hydrated,
-    createSession,
-    completeSession,
-    cancelSession,
-    clearHistory,
-    getActiveSessions,
-    removeSession,
-    updateSessionTarget,
-  } = useSession();
-  const { permission, supported, requestPermission, sendNotification } = useNotifications();
-  const pip = usePictureInPicture(targetDate);
-
-  const activeSessions = getActiveSessions();
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-
-  const selectedSession =
-    selectedSessionId && activeSessions.some((s) => s.id === selectedSessionId)
-      ? activeSessions.find((s) => s.id === selectedSessionId) ?? activeSessions[0]
-      : activeSessions[0] ?? null;
+  const { setTheme, settings, setShowMilliseconds } = useSettings();
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
@@ -65,190 +203,15 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    const parse = () => setProposalFromUrl(parseProposalFromHash(window.location.hash));
     setLocaleState(getInitialLocale());
     setMounted(true);
-
-    if ("serviceWorker" in navigator) {
-      const base = document.querySelector("link[rel='manifest']")?.getAttribute("href")?.replace("manifest.json", "") ?? "/";
-      navigator.serviceWorker.register(`${base}sw.js`).catch(() => {});
-    }
+    parse();
+    window.addEventListener("hashchange", parse);
+    return () => window.removeEventListener("hashchange", parse);
   }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    const actives = getActiveSessions();
-    const stillActive = actives.filter((s) => new Date(s.targetTime).getTime() > Date.now());
-    actives.forEach((s) => {
-      if (new Date(s.targetTime).getTime() <= Date.now()) completeSession(s.id);
-    });
-    if (stillActive.length > 0 && !selectedSessionId) {
-      setSelectedSessionId(stillActive[0].id);
-    }
-  }, [hydrated]);
-
-  useEffect(() => {
-    if (!selectedSession) {
-      setTargetDate(null);
-      setTotalDuration(0);
-      return;
-    }
-    const target = new Date(selectedSession.targetTime);
-    if (target.getTime() <= Date.now()) {
-      completeSession(selectedSession.id);
-      const next = getActiveSessions().filter((s) => s.id !== selectedSession.id)[0];
-      setSelectedSessionId(next?.id ?? null);
-      return;
-    }
-    setTargetDate(target);
-    setTotalDuration(selectedSession.totalDuration);
-  }, [selectedSession?.id]);
-
-  const liveNotificationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (!(targetDate && !showComplete) || permission !== "granted" || !("serviceWorker" in navigator)) {
-      if (liveNotificationInterval.current) {
-        clearInterval(liveNotificationInterval.current);
-        liveNotificationInterval.current = null;
-      }
-      if (!(targetDate && !showComplete)) {
-        navigator.serviceWorker.ready.then((reg) => {
-          reg.getNotifications().then((list) => list.filter((n) => n.tag === "count23-live").forEach((n) => n.close()));
-        });
-        if (navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({ type: "COUNTDOWN_CANCEL" });
-        }
-      }
-      return;
-    }
-
-    const LIVE_TAG = "count23-live";
-    const updateLiveNotification = () => {
-      const remaining = targetDate.getTime() - Date.now();
-      if (remaining <= 0) return;
-      const body = `${formatRemaining(remaining)} left`;
-      navigator.serviceWorker.ready
-        .then((reg) =>
-          reg.getNotifications().then((existing) => {
-            const found = existing.find((n) => n.tag === LIVE_TAG);
-            if (found) found.close();
-            return reg.showNotification("Count23", {
-              body,
-              tag: LIVE_TAG,
-              icon: "/icons/icon-192.svg",
-              badge: "/icons/icon-192.svg",
-              renotify: false,
-              requireInteraction: true,
-              silent: true,
-            } as NotificationOptions);
-          })
-        )
-        .catch(() => {});
-    };
-
-    updateLiveNotification();
-    liveNotificationInterval.current = setInterval(updateLiveNotification, 1000);
-
-    return () => {
-      if (liveNotificationInterval.current) {
-        clearInterval(liveNotificationInterval.current);
-        liveNotificationInterval.current = null;
-      }
-    };
-  }, [targetDate, showComplete, permission]);
-
-  const handleComplete = useCallback(() => {
-    setShowComplete(true);
-    if (selectedSession) {
-      completeSession(selectedSession.id);
-      const next = getActiveSessions().filter((s) => s.id !== selectedSession.id)[0];
-      setSelectedSessionId(next?.id ?? null);
-    }
-    sendNotification("Count23", t.notifications.completed);
-
-    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: "COUNTDOWN_COMPLETE",
-        title: "Count23",
-        body: t.notifications.completed,
-      });
-    }
-  }, [selectedSession, completeSession, getActiveSessions, sendNotification, t]);
-
-  const handleMilestone = useCallback(
-    (label: string) => {
-      const body = label === "5min" ? t.notifications.fiveMin : t.notifications.oneMin;
-      sendNotification("Count23", body);
-    },
-    [sendNotification, t],
-  );
-
-  const state = useCountdown({
-    targetTime: targetDate,
-    totalDuration,
-    onComplete: handleComplete,
-    onMilestone: handleMilestone,
-  });
-
-  const handleStart = useCallback(
-    (target: Date) => {
-      const duration = target.getTime() - Date.now();
-      if (duration <= 0) return;
-      setShowComplete(false);
-      setShowAddForm(false);
-      const session = createSession(target, duration);
-      setSelectedSessionId(session.id);
-      setTargetDate(target);
-      setTotalDuration(duration);
-
-      if (permission === "default") requestPermission();
-    },
-    [createSession, permission, requestPermission],
-  );
-
-  const handleCancel = useCallback(
-    (sessionId?: string) => {
-      const id = sessionId ?? selectedSession?.id;
-      if (id) {
-        cancelSession(id);
-        if (id === selectedSessionId) {
-          const next = getActiveSessions().filter((s) => s.id !== id)[0];
-          setSelectedSessionId(next?.id ?? null);
-        }
-      }
-      if (!sessionId || sessionId === selectedSessionId) {
-        setTargetDate(null);
-        setTotalDuration(0);
-        setShowComplete(false);
-      }
-    },
-    [selectedSession?.id, selectedSessionId, cancelSession, getActiveSessions],
-  );
-
-  const handleReset = useCallback(() => {
-    setTargetDate(null);
-    setTotalDuration(0);
-    setShowComplete(false);
-  }, []);
-
-  const handleEditSession = useCallback(
-    (id: string, nextTarget: Date) => {
-      updateSessionTarget(id, nextTarget);
-      if (id === selectedSessionId) {
-        const duration = nextTarget.getTime() - Date.now();
-        if (duration > 0) {
-          setTargetDate(nextTarget);
-          setTotalDuration(duration);
-          setShowComplete(false);
-        }
-      }
-    },
-    [updateSessionTarget, selectedSessionId],
-  );
 
   if (!mounted) return null;
-
-  const isActive = targetDate !== null && !showComplete;
 
   return (
     <LocaleContext value={{ locale, setLocale, t }}>
@@ -264,117 +227,42 @@ export default function HomePage() {
               <span className="ui-ios-icon text-[11px]">⚙</span>
               {t.settings.open}
             </button>
-            <NotificationToggle
-              permission={permission}
-              supported={supported}
-              onRequest={requestPermission}
-            />
-            <InstallPrompt />
             <LocaleSwitcher />
           </div>
         </header>
 
-        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center px-4 pb-8">
-          <AnimatePresence mode="wait">
-            {showComplete ? (
-              <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <SuccessAnimation onReset={handleReset} />
-              </motion.div>
-            ) : isActive ? (
-              <motion.div
-                key="countdown"
-                className="flex w-full flex-col items-center gap-5 sm:gap-6"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <div className="glass-card glow-blue w-full max-w-xl p-6 sm:p-10">
-                  <CountdownCircle
-                    state={state}
-                    labels={{
-                      day: t.timer.day,
-                      days: t.timer.days,
-                      hours: t.timer.hours,
-                      minutes: t.timer.minutes,
-                      seconds: t.timer.seconds,
-                    }}
-                    showMilliseconds={settings.showMilliseconds}
-                  />
-                </div>
-                <CountdownDisplay
-                  targetTime={targetDate}
-                  state={state}
-                  totalDuration={totalDuration}
-                  onCancel={() => handleCancel()}
-                  onPopOut={pip.enterPiP}
-                  pipSupported={pip.isSupported}
-                  pipActive={pip.isActive}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="input"
-                className="flex w-full flex-col items-center gap-6 sm:gap-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <h2 className="text-3xl font-bold ui-text-strong sm:text-4xl">
-                    {t.app.title}
-                  </h2>
-                  <p className="text-sm ui-text-muted">{t.app.tagline}</p>
-                </div>
-
-                <div className="glass-card w-full max-w-xl p-7 sm:p-10">
-                  <TimeInput onStart={handleStart} />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {hydrated && sessions.length > 0 && (
-            <motion.div
-              className="mt-6 w-full max-w-2xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="glass-card p-5">
-                <SessionList
-                  sessions={sessions}
-                  activeSessions={activeSessions}
-                  selectedSessionId={selectedSessionId}
-                  onSelectSession={setSelectedSessionId}
-                  onCancelSession={handleCancel}
-                  onEditSession={handleEditSession}
-                  onClearHistory={clearHistory}
-                  onRemoveSession={removeSession}
-                  onAddTimer={() => setShowAddForm(true)}
-                />
-              </div>
-            </motion.div>
-          )}
-
-          {showAddForm && isActive && (
-            <motion.div
-              className="mt-4 w-full max-w-2xl glass-card p-6"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium ui-text-muted">{t.timer.addAnother}</span>
-                <button
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="text-xs ui-text-dim hover:text-white"
-                >
-                  {t.timer.cancel}
-                </button>
-              </div>
-              <TimeInput onStart={handleStart} />
-            </motion.div>
+        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-start px-4 pb-8 pt-6">
+          {!proposalFromUrl ? (
+            <div className="glass-card w-full max-w-xl p-6 sm:p-8">
+              <h2 className="mb-3 text-xl font-bold ui-text-strong">{t.proposal.createTitle}</h2>
+              <p className="mb-4 text-sm ui-text-muted">{t.proposal.createSubtitle}</p>
+              <ProposalComposer
+                titleLabel={t.proposal.titleLabel}
+                titlePlaceholder={t.proposal.titlePlaceholder}
+                actorLabelText={t.proposal.actorLabel}
+                actorPlaceholder={t.proposal.actorPlaceholder}
+                timeLabel={t.proposal.timeLabel}
+                submitLabel={t.proposal.createButton}
+                futureErrorLabel={t.timer.errorPast}
+                onSubmit={({ title, actorLabel, targetTime }) => {
+                  const created = createInitialProposalState({
+                    title,
+                    actorLabel,
+                    proposedTimeUtc: targetTime.toISOString(),
+                    actorTimeZone: getUserTimeZone(),
+                  });
+                  window.history.replaceState(null, "", formatProposalHash(created));
+                  setProposalFromUrl(created);
+                }}
+              />
+            </div>
+          ) : (
+            <ProposalWorkspace
+              key={proposalFromUrl.meetingId}
+              initialProposal={proposalFromUrl}
+              locale={locale}
+              showMilliseconds={settings.showMilliseconds}
+            />
           )}
         </main>
 

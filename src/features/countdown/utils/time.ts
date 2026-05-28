@@ -111,3 +111,28 @@ export function formatDurationLong(ms: number, locale: string): string {
   parts.push(`${unit.format(seconds)}s`);
   return parts.join(" ");
 }
+
+export function formatDateTimeInZone(date: Date, locale: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone,
+  }).format(date);
+}
+
+export function formatDateTimeWithZoneLabel(date: Date, locale: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone,
+    timeZoneName: "short",
+  }).format(date);
+}
+
+export function getLocalTimeZoneName(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
