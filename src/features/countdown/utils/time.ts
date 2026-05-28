@@ -151,3 +151,19 @@ export function getLocalTimeZoneName(): string {
     return "UTC";
   }
 }
+
+export function formatTimeZoneLabel(timeZone: string, locale: string, date = new Date()): string {
+  try {
+    const parts = new Intl.DateTimeFormat(locale, {
+      timeZone,
+      timeZoneName: "short",
+    }).formatToParts(date);
+    return parts.find((part) => part.type === "timeZoneName")?.value ?? timeZone;
+  } catch {
+    return timeZone;
+  }
+}
+
+export function isSameTimeZone(a: string, b: string): boolean {
+  return a === b;
+}

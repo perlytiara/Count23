@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { CountdownCircle, CountdownDisplay, TimeInput, useCountdown } from "@/features/countdown";
+import { CountdownCircle, TimeInput, useCountdown } from "@/features/countdown";
 import {
   formatDateTimeWithZoneLabel,
+  formatTargetDisplay,
+  formatTimeZoneLabel,
   getLocalTimeZoneName,
+  isSameTimeZone,
 } from "@/features/countdown/utils/time";
 import { LocaleContext, getMessages, type Locale } from "@/features/i18n";
 import { SettingsPanel, useSettings } from "@/features/settings";
@@ -32,22 +35,25 @@ interface ProposalWorkspaceProps {
   initialProposal: ProposalState;
   locale: Locale;
   showMilliseconds: boolean;
-  fromSharedLink: boolean;
-  onPromoteToShareable: (proposal: ProposalState) => void;
 }
 
-function ProposalWorkspace({
-  initialProposal,
-  locale,
-  showMilliseconds,
-  fromSharedLink,
-  onPromoteToShareable,
-}: ProposalWorkspaceProps) {
+function ProposalWorkspace({ initialProposal, locale, showMilliseconds }: ProposalWorkspaceProps) {
   const { t } = useMemo(() => ({ t: getMessages(locale) }), [locale]);
   const [showEdit, setShowEdit] = useState(false);
+  const [showTitle, setShowTitle] = useState(Boolean(initialProposal.title));
   const { proposal, derived, appendPropose, appendConfirm, updateTitle } = useProposalState(initialProposal);
 
   const localTz = useMemo(() => getLocalTimeZoneName(), []);
+  const sameZoneAsOrganizer = isSameTimeZone(localTz, proposal.baseTimeZone);
+  const organizerZoneLabel = useMemo(
+    () => formatTimeZoneLabel(proposal.baseTimeZone, locale),
+    [proposal.baseTimeZone, locale],
+  );
+
+  useEffect(() => {
+    window.history.replaceState(null, "", formatProposalHash(proposal));
+  }, [proposal]);
+
   const shareUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     const absolute = new URL(window.location.href);
@@ -57,11 +63,14 @@ function ProposalWorkspace({
 
   const targetTime = derived.effectiveTimeUtc ? new Date(derived.effectiveTimeUtc) : null;
   const referenceStart = useMemo(() => {
-    const latest = [...proposal.events].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).at(-1);
+    const latest = [...proposal.events]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .at(-1);
     return latest ? new Date(latest.createdAt).getTime() : Date.now();
   }, [proposal.events]);
   const totalDuration = targetTime ? Math.max(targetTime.getTime() - referenceStart, 1) : 0;
   const countdownState = useCountdown({ targetTime, totalDuration });
+  const progressPercent = Math.round(countdownState.progress * 100);
 
   const historyItems = useMemo(
     () =>
@@ -77,11 +86,17 @@ function ProposalWorkspace({
     [proposal.events, t, locale, localTz],
   );
 
+  const showHistory = proposal.events.length > 1;
+
   if (!targetTime) return null;
 
   return (
-    <div className="flex w-full max-w-2xl flex-col items-center gap-4">
-      <div className="glass-card glow-blue w-full max-w-xl p-6 sm:p-10">
+    <div className="flex w-full max-w-xl flex-col items-center gap-3">
+      <div className="glass-card glow-blue w-full p-5 sm:p-8">
+        {proposal.title && (
+          <p className="mb-3 text-center text-sm font-medium ui-text-strong">{proposal.title}</p>
+        )}
+
         <CountdownCircle
           state={countdownState}
           labels={{
@@ -92,66 +107,72 @@ function ProposalWorkspace({
             seconds: t.timer.seconds,
           }}
           showMilliseconds={showMilliseconds}
+          progressPercent={progressPercent}
+          targetLabel={t.timer.targetLabel}
+          targetDisplay={formatTargetDisplay(targetTime, locale)}
         />
       </div>
 
-      <CountdownDisplay
-        targetTime={targetTime}
-        state={countdownState}
-        totalDuration={totalDuration}
+      {!sameZoneAsOrganizer && (
+        <div className="w-full max-w-md space-y-1 px-1 text-center text-xs">
+          <p className="ui-text-body">
+            <span className="ui-text-muted">{t.proposal.yourTime}: </span>
+            <span className="font-mono">{formatDateTimeWithZoneLabel(targetTime, locale, localTz)}</span>
+          </p>
+          <p className="ui-text-muted">
+            {t.proposal.organizerTime} ({organizerZoneLabel}):{" "}
+            <span className="font-mono ui-text-body">
+              {formatDateTimeWithZoneLabel(targetTime, locale, proposal.baseTimeZone)}
+            </span>
+          </p>
+        </div>
+      )}
+
+      <ShareBar
+        shareUrl={shareUrl}
+        copyLabel={t.proposal.copyLink}
+        copiedLabel={t.proposal.copied}
+        nativeShareLabel={t.proposal.shareNative}
       />
 
-      <div className="glass-card w-full max-w-2xl p-4">
-        <div className="mb-3 grid gap-2 sm:grid-cols-2">
-          <div className="rounded-xl border border-white/20 bg-white/[0.08] px-3 py-2">
-            <p className="text-[10px] uppercase tracking-wider ui-text-muted">{t.proposal.yourTime}</p>
-            <p className="font-mono text-sm ui-text-strong">{formatDateTimeWithZoneLabel(targetTime, locale, localTz)}</p>
-          </div>
-          <div className="rounded-xl border border-white/20 bg-white/[0.08] px-3 py-2">
-            <p className="text-[10px] uppercase tracking-wider ui-text-muted">{t.proposal.originTime}</p>
-            <p className="font-mono text-sm ui-text-strong">
-              {formatDateTimeWithZoneLabel(targetTime, locale, proposal.baseTimeZone)}
-            </p>
-          </div>
-        </div>
-
-        <label className="mb-1 block text-[10px] uppercase tracking-wider ui-text-muted">{t.proposal.titleLabel}</label>
-        <input
-          value={proposal.title || ""}
-          onChange={(e) => updateTitle(e.target.value)}
-          placeholder={t.proposal.titlePlaceholder}
-          className="mb-3 w-full rounded-xl border border-white/20 bg-white/[0.08] px-3 py-2 text-sm ui-text-strong outline-none focus:border-blue-400"
-        />
-
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex w-full max-w-md flex-wrap items-center justify-center gap-2">
+        {!showTitle && !proposal.title && (
           <button
             type="button"
-            onClick={() => setShowEdit((prev) => !prev)}
-            className="rounded-lg border border-white/20 bg-white/[0.08] px-3 py-2 text-xs font-semibold ui-text-body hover:bg-white/[0.14]"
+            onClick={() => setShowTitle(true)}
+            className="text-xs ui-text-muted transition-colors hover:ui-text-body"
           >
-            {showEdit ? t.proposal.closeEditor : t.proposal.suggestEdit}
+            {t.proposal.addTitle}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              onPromoteToShareable(proposal);
-            }}
-            className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500"
-          >
-            {fromSharedLink ? t.proposal.updateLink : t.proposal.createButton}
-          </button>
+        )}
+        {(showTitle || proposal.title) && (
+          <input
+            value={proposal.title || ""}
+            onChange={(e) => updateTitle(e.target.value)}
+            placeholder={t.proposal.titlePlaceholder}
+            className="w-full max-w-xs rounded-lg border border-white/15 bg-white/[0.06] px-2.5 py-1.5 text-xs ui-text-strong outline-none placeholder:ui-text-dim focus:border-blue-400/60"
+          />
+        )}
+        <button
+          type="button"
+          onClick={() => setShowEdit((prev) => !prev)}
+          className="text-xs ui-text-muted transition-colors hover:ui-text-body"
+        >
+          {showEdit ? t.proposal.closeEditor : t.proposal.suggestEdit}
+        </button>
+        {derived.hasPendingSuggestion && (
           <button
             type="button"
             onClick={() => appendConfirm(getUserTimeZone())}
-            className="rounded-lg border border-white/20 bg-white/[0.08] px-3 py-2 text-xs font-semibold ui-text-body hover:bg-white/[0.14]"
+            className="rounded-lg bg-emerald-600/90 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-500"
           >
             {t.proposal.confirmTime}
           </button>
-        </div>
+        )}
       </div>
 
       {showEdit && (
-        <div className="glass-card w-full p-4">
+        <div className="glass-card w-full max-w-md p-4">
           <ProposalComposer
             titleLabel={t.proposal.titleLabel}
             titlePlaceholder={t.proposal.titlePlaceholder}
@@ -173,19 +194,14 @@ function ProposalWorkspace({
         </div>
       )}
 
-      <ShareBar
-        shareUrl={shareUrl}
-        copyLabel={t.proposal.copyLink}
-        copiedLabel={t.proposal.copied}
-        nativeShareLabel={t.proposal.shareNative}
-      />
-
-      <ProposalHistory
-        title={t.proposal.history}
-        showLabel={t.proposal.showHistory}
-        hideLabel={t.proposal.hideHistory}
-        items={historyItems}
-      />
+      {showHistory && (
+        <ProposalHistory
+          title={t.proposal.history}
+          showLabel={t.proposal.showHistory}
+          hideLabel={t.proposal.hideHistory}
+          items={historyItems}
+        />
+      )}
     </div>
   );
 }
@@ -195,7 +211,6 @@ export default function HomePage() {
   const [showSettings, setShowSettings] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [proposalFromUrl, setProposalFromUrl] = useState<ProposalState | null>(null);
-  const [localProposal, setLocalProposal] = useState<ProposalState | null>(null);
   const t = useMemo(() => getMessages(locale), [locale]);
   const { setTheme, settings, setShowMilliseconds } = useSettings();
 
@@ -206,11 +221,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const parse = () => {
-      const parsed = parseProposalFromHash(window.location.hash);
-      setProposalFromUrl(parsed);
-      if (parsed) {
-        setLocalProposal(null);
-      }
+      setProposalFromUrl(parseProposalFromHash(window.location.hash));
     };
     setLocaleState(getInitialLocale());
     setMounted(true);
@@ -220,7 +231,6 @@ export default function HomePage() {
   }, []);
 
   if (!mounted) return null;
-  const activeProposal = proposalFromUrl ?? localProposal;
 
   return (
     <LocaleContext value={{ locale, setLocale, t }}>
@@ -242,10 +252,10 @@ export default function HomePage() {
 
         <main
           className={`mx-auto flex w-full max-w-6xl flex-1 flex-col items-center px-4 pb-8 ${
-            activeProposal ? "justify-start pt-6" : "justify-center"
+            proposalFromUrl ? "justify-start pt-6" : "justify-center"
           }`}
         >
-          {!activeProposal ? (
+          {!proposalFromUrl ? (
             <div className="glass-card glow-blue flex w-full max-w-lg flex-col items-center p-8 sm:p-10">
               <TimeInput
                 onStart={(targetTime) => {
@@ -253,22 +263,17 @@ export default function HomePage() {
                     proposedTimeUtc: targetTime.toISOString(),
                     actorTimeZone: getUserTimeZone(),
                   });
-                  setLocalProposal(created);
+                  window.history.replaceState(null, "", formatProposalHash(created));
+                  setProposalFromUrl(created);
                 }}
               />
             </div>
           ) : (
             <ProposalWorkspace
-              key={activeProposal.meetingId}
-              initialProposal={activeProposal}
+              key={proposalFromUrl.meetingId}
+              initialProposal={proposalFromUrl}
               locale={locale}
               showMilliseconds={settings.showMilliseconds}
-              fromSharedLink={proposalFromUrl !== null}
-              onPromoteToShareable={(proposal) => {
-                window.history.replaceState(null, "", formatProposalHash(proposal));
-                setProposalFromUrl(proposal);
-                setLocalProposal(null);
-              }}
             />
           )}
         </main>

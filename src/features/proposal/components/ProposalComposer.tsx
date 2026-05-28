@@ -56,7 +56,7 @@ export function ProposalComposer({
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col gap-3"
     >
-      <label className="text-xs uppercase tracking-wider ui-text-muted">{titleLabel}</label>
+      <label className="text-xs uppercase tracking-wider ui-text-muted">{titleLabel} (optional)</label>
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
