@@ -74,6 +74,8 @@
   "proposal": {
     "createTitle": "Create meeting proposal",
     "createSubtitle": "Pick your local time and share the link.",
+    "pickTimeTitle": "Pick a time to share",
+    "pickTimeSubtitle": "Start a full-screen timer and share it with one link.",
     "defaultTitle": "Shared meeting plan",
     "titleLabel": "Title",
     "titlePlaceholder": "Dinner, call, game night...",
@@ -81,6 +83,7 @@
     "actorPlaceholder": "Alice",
     "timeLabel": "Proposed local date & time",
     "createButton": "Create link",
+    "updateLink": "Update link",
     "sendSuggestion": "Suggest new time",
     "closeEditor": "Close editor",
     "suggestEdit": "Suggest edit",

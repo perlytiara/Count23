@@ -74,6 +74,8 @@
   "proposal": {
     "createTitle": "Creer une proposition de rendez-vous",
     "createSubtitle": "Choisissez votre heure locale puis partagez le lien.",
+    "pickTimeTitle": "Choisissez une heure a partager",
+    "pickTimeSubtitle": "Demarrez un minuteur plein ecran et partagez-le via un lien.",
     "defaultTitle": "Rendez-vous partage",
     "titleLabel": "Titre",
     "titlePlaceholder": "Diner, appel, sortie...",
@@ -81,6 +83,7 @@
     "actorPlaceholder": "Alice",
     "timeLabel": "Date et heure locales proposees",
     "createButton": "Creer le lien",
+    "updateLink": "Mettre a jour le lien",
     "sendSuggestion": "Proposer une autre heure",
     "closeEditor": "Fermer l'editeur",
     "suggestEdit": "Proposer une modification",
