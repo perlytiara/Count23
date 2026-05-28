@@ -132,12 +132,16 @@ export function formatDateTimeInZone(date: Date, locale: string, timeZone: strin
 }
 
 export function formatDateTimeWithZoneLabel(date: Date, locale: string, timeZone: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
+  const formatted = new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
     timeZone,
     timeZoneName: "short",
   }).format(date);
+  return formatted;
 }
 
 export function getLocalTimeZoneName(): string {
